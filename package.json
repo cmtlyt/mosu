@@ -1,0 +1,51 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "oxlint",
+    "lint:github": "oxlint --format=github",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt --no-error-on-unmatched-pattern",
+    "fmt:check": "oxfmt --no-error-on-unmatched-pattern --check",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "^1.170.15",
+    "@tanstack/router-core": "^1.171.13",
+    "@tanstack/router-generator": "^1.167.17",
+    "preact": "^10.29.2",
+    "preact-iso": "^2.12.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
+    "@preact/preset-vite": "^2.10.2",
+    "@tanstack/router-plugin": "^1.168.18",
+    "@tanstack/router-vite-plugin": "^1.167.18",
+    "@typescript/native-preview": "7.0.0-dev.20260612.1",
+    "changelogithub": "^14.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
+    "oxfmt": "^0.54.0",
+    "oxlint": "^1.69.0",
+    "vite": "^8.0.16"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "pnpm run fmt",
+      "pnpm run lint"
+    ]
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": ">=11"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
