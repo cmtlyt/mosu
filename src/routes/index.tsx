@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import preactLogo from '../assets/preact.svg';
+import preactLogo from '@/assets/preact.svg';
 
 function Resource(props: { title: string; description: string; href: string }) {
   return (
@@ -38,6 +38,6 @@ function RouteComponent() {
   );
 }
 
-export const Route = createFileRoute('/home')({
+export const Route = createFileRoute('/')({
   component: RouteComponent,
 });

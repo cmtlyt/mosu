@@ -103,7 +103,7 @@
     "typescript/no-duplicate-enum-values": "error",
     "eslint/no-eq-null": "error",
     "eslint/max-classes-per-file": "error",
-    "eslint/max-lines": "error",
+    "eslint/max-lines": ["error", { "max": 500 }],
     "typescript/no-for-in-array": "error",
     "eslint/no-plusplus": "off",
     "typescript/no-misused-promises": "error",

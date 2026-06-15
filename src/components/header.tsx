@@ -1,17 +1,14 @@
-import { useLocation } from 'preact-iso';
+import { Link, useLocation } from '@tanstack/react-router';
 
 export function Header() {
-  const { url } = useLocation();
+  const { pathname } = useLocation();
 
   return (
     <header>
       <nav>
-        <a href="/home" class={url === '/home' ? 'active' : ''}>
+        <Link to="/" class={pathname === '/' ? 'active' : ''}>
           Home
-        </a>
-        <a href="/404" class={url === '/404' ? 'active' : ''}>
-          404
-        </a>
+        </Link>
       </nav>
     </header>
   );

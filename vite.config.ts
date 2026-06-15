@@ -4,6 +4,7 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/mosu/',
   plugins: [
     tanstackRouter({
       target: 'react',

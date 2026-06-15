@@ -13,18 +13,18 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@cmtlyt/lingshu-toolkit": "^0.10.0",
+    "@cmtlyt/logger": "^0.6.1",
+    "@mlc-ai/web-llm": "^0.2.84",
     "@tanstack/react-router": "^1.170.15",
-    "@tanstack/router-core": "^1.171.13",
-    "@tanstack/router-generator": "^1.167.17",
-    "preact": "^10.29.2",
-    "preact-iso": "^2.12.0"
+    "motion": "^12.40.0",
+    "preact": "^10.29.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
     "@preact/preset-vite": "^2.10.2",
     "@tanstack/router-plugin": "^1.168.18",
-    "@tanstack/router-vite-plugin": "^1.167.18",
     "@typescript/native-preview": "7.0.0-dev.20260612.1",
     "changelogithub": "^14.0.0",
     "husky": "^9.1.7",
@@ -46,6 +46,6 @@
     }
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   }
 }

@@ -1,7 +1,13 @@
+import { Header } from '@/components/header';
 import { Outlet, createRootRoute } from '@tanstack/react-router';
 
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <section>
+      <Header />
+      <Outlet />
+    </section>
+  );
 }
 
 export const Route = createRootRoute({

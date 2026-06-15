@@ -1,23 +1,11 @@
 import { render } from 'preact';
-import { Router, Outlet, RouterProvider } from '@tanstack/react-router';
-import { Header } from './components/header';
-import './style.css';
+import { Router, RouterProvider } from '@tanstack/react-router';
 import { routeTree } from './route-tree.gen';
-
-function Root() {
-  return (
-    <>
-      <Header />
-      <main>
-        <Outlet />
-      </main>
-    </>
-  );
-}
+import './global.css';
 
 const router = new Router({
+  basepath: import.meta.env.BASE_URL,
   routeTree,
-  defaultLayout: Root,
 });
 
 declare module '@tanstack/react-router' {

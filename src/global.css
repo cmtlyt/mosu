@@ -1,0 +1,16 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 1px;
+}
+
+body {
+  margin: 0;
+  font-size: 16rem;
+}
+
+#app {
+  min-width: 100vw;
+  min-width: 100dvw;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
