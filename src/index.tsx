@@ -1,4 +1,4 @@
-import { render } from 'preact';
+import { createRoot } from 'react-dom/client';
 import { Router, RouterProvider } from '@tanstack/react-router';
 import { routeTree } from './route-tree.gen';
 import './global.css';
@@ -14,6 +14,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-render(<RouterProvider router={router} />, document.getElementById('app')!);
+createRoot(document.getElementById('app')!).render(<RouterProvider router={router} />);
 
 export { router };

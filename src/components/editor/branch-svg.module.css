@@ -1,0 +1,11 @@
+.branchSvg {
+  display: block;
+}
+
+.branchNode {
+  cursor: pointer;
+}
+
+.branchNode:hover circle {
+  stroke-width: 3;
+}

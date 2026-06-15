@@ -1,0 +1,31 @@
+.message {
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  max-width: 85%;
+}
+
+.user {
+  align-self: flex-end;
+  background: #4f86f7;
+  color: #fff;
+}
+
+.assistant {
+  align-self: flex-start;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.role {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.content {
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

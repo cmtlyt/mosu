@@ -7,13 +7,11 @@
     "allowJs": true,
     "checkJs": true,
 
-    /* Preact Config */
+    /* React Config */
     "jsx": "react-jsx",
-    "jsxImportSource": "preact",
+    "jsxImportSource": "react",
     "skipLibCheck": true,
     "paths": {
-      "react": ["./node_modules/preact/compat/"],
-      "react-dom": ["./node_modules/preact/compat/"],
       "@/*": ["./src/*"]
     }
   },

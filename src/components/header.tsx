@@ -6,7 +6,7 @@ export function Header() {
   return (
     <header>
       <nav>
-        <Link to="/" class={pathname === '/' ? 'active' : ''}>
+        <Link to="/" className={pathname === '/' ? 'active' : ''}>
           Home
         </Link>
       </nav>

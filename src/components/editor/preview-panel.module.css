@@ -1,0 +1,13 @@
+.previewPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-right: 1px solid #e2e8f0;
+}
+
+.header {
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
