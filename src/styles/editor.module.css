@@ -1,6 +1,36 @@
 .editorPage {
   display: grid;
   grid-template-columns: 320px 1fr 300px;
+  grid-template-rows: auto 1fr;
   height: 100vh;
   overflow: hidden;
+}
+
+.toolbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.toolbarButton {
+  padding: 6px 14px;
+  font-size: 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  color: #334155;
+}
+
+.toolbarButton:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.hiddenInput {
+  display: none;
 }

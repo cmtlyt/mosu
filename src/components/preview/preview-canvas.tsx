@@ -1,4 +1,4 @@
-import { useRef, useLayoutEffect, useImperativeHandle, forwardRef } from 'react';
+import { useRef, useLayoutEffect, useEffect, useImperativeHandle, forwardRef } from 'react';
 import type { AnimationConfig } from '@/types/animation';
 import type { UseAnimationPlayerReturn } from '@/hooks/use-animation-player';
 import { logger } from '@/libs/logger';
@@ -26,9 +26,11 @@ export const PreviewCanvas = forwardRef<PreviewCanvasHandle, PreviewCanvasProps>
       getContainer: () => containerRef.current,
     }));
 
+    // DOM and style updates should only happen when customDom/customStyle change,
+    // NOT when config changes (e.g. viewing different node details).
     useLayoutEffect(() => {
       if (!containerRef.current) {
-        logger.warn('components.preview-canvas.effect', 'Container ref is null');
+        logger.warn('components.preview-canvas.dom-effect', 'Container ref is null');
         return;
       }
 
@@ -51,14 +53,17 @@ export const PreviewCanvas = forwardRef<PreviewCanvasHandle, PreviewCanvasProps>
         styleTagRef.current = null;
       }
 
-      logger.info('components.preview-canvas.effect', `DOM set, tracks: ${config.tracks.length}`);
+      logger.info('components.preview-canvas.dom-effect', 'DOM updated');
+    }, [customDom, customStyle]);
 
-      if (config.tracks.length > 0 && containerRef.current.children.length > 0) {
-        const targetEl = containerRef.current.querySelector(config.tracks[0].target);
-        logger.info('components.preview-canvas.effect', `Target element found: ${!!targetEl}`);
-        playerRef.current.applyAndPlay(containerRef.current, config);
+    // Animation replay should happen when config changes.
+    useEffect(() => {
+      if (!containerRef.current || config.tracks.length === 0 || containerRef.current.children.length === 0) {
+        return;
       }
-    }, [config, customDom, customStyle]);
+      logger.info('components.preview-canvas.anim-effect', `Playing animation, tracks: ${config.tracks.length}`);
+      playerRef.current.applyAndPlay(containerRef.current, config);
+    }, [config]);
 
     return (
       <div className={styles.canvas}>

@@ -2,18 +2,25 @@ import type { AnimationConfig } from '@/types/animation';
 import { logger } from '@/libs/logger';
 import { dispatchEditorEvent, EDITOR_EVENTS } from './event-bus';
 
-export function encodeConfigToQuery(config: AnimationConfig): string {
+/** 完整的动画项目数据，包含配置、DOM 和样式 */
+export interface AnimationProjectData {
+  config: AnimationConfig;
+  customDom: string | null;
+  customStyle: string | null;
+}
+
+export function encodeConfigToQuery(data: AnimationProjectData): string {
   try {
-    const json = JSON.stringify(config);
+    const json = JSON.stringify(data);
     const encoded = btoa(encodeURIComponent(json));
     return `animation=${encoded}`;
   } catch (error) {
-    logger.error('libs.share-utils.encode', 'Failed to encode animation config to query', error);
+    logger.error('libs.share-utils.encode', 'Failed to encode animation project data to query', error);
     return '';
   }
 }
 
-export function decodeConfigFromQuery(queryString: string): AnimationConfig | null {
+export function decodeConfigFromQuery(queryString: string): AnimationProjectData | null {
   try {
     const params = new URLSearchParams(queryString);
     const encoded = params.get('animation');
@@ -22,61 +29,73 @@ export function decodeConfigFromQuery(queryString: string): AnimationConfig | nu
     }
 
     const json = decodeURIComponent(atob(encoded));
-    const config = JSON.parse(json) as AnimationConfig;
+    const data = JSON.parse(json) as AnimationProjectData;
 
-    if (!config.version || !config.id || !config.tracks) {
-      logger.warn('libs.share-utils.decode', 'Invalid animation config from query: missing required fields');
+    if (!data.config?.version || !data.config?.id || !data.config?.tracks) {
+      logger.warn('libs.share-utils.decode', 'Invalid animation project data from query: missing required fields');
       return null;
     }
 
-    return config;
+    return data;
   } catch (error) {
-    logger.warn('libs.share-utils.decode', 'Failed to decode animation config from query', error);
+    logger.warn('libs.share-utils.decode', 'Failed to decode animation project data from query', error);
     return null;
   }
 }
 
-export function exportConfigToFile(config: AnimationConfig): void {
+/** 解析完成后清除 URL 中的 animation query 参数 */
+export function clearAnimationQuery(): void {
+  const url = new URL(globalThis.location.href);
+  if (url.searchParams.has('animation')) {
+    url.searchParams.delete('animation');
+    globalThis.history.replaceState(null, '', url.toString());
+    logger.info('libs.share-utils.clearQuery', 'Cleared animation query from URL');
+  }
+}
+
+export function exportProjectToFile(data: AnimationProjectData): void {
   try {
-    const json = JSON.stringify(config, null, 2);
+    const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `${config.name || 'animation'}.json`;
+    anchor.download = `${data.config.name || 'animation'}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
-    logger.info('libs.share-utils.export', `Exported animation config: ${config.name}`);
+    logger.info('libs.share-utils.export', `Exported animation project: ${data.config.name}`);
+    dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '导出成功', type: 'success' });
   } catch (error) {
-    logger.error('libs.share-utils.export', 'Failed to export animation config', error);
-    dispatchEditorEvent(EDITOR_EVENTS.IMPORT_ERROR, { message: '导出失败' });
+    logger.error('libs.share-utils.export', 'Failed to export animation project', error);
+    dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '导出失败', type: 'error' });
   }
 }
 
-export function importConfigFromFile(file: File): Promise<AnimationConfig | null> {
+export function importProjectFromFile(file: File): Promise<AnimationProjectData | null> {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const config = JSON.parse(reader.result as string) as AnimationConfig;
-        if (!config.version || !config.id || !config.tracks) {
-          logger.warn('libs.share-utils.import', 'Invalid animation config file: missing required fields');
-          dispatchEditorEvent(EDITOR_EVENTS.IMPORT_ERROR, { message: '文件格式无效：缺少必要字段' });
+        const data = JSON.parse(reader.result as string) as AnimationProjectData;
+
+        if (!data.config?.version || !data.config?.id || !data.config?.tracks) {
+          logger.warn('libs.share-utils.import', 'Invalid animation project file: missing required fields');
+          dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '文件格式无效：缺少必要字段', type: 'error' });
           resolve(null);
           return;
         }
-        logger.info('libs.share-utils.import', `Imported animation config: ${config.name}`);
-        dispatchEditorEvent(EDITOR_EVENTS.IMPORT_SUCCESS, { config });
-        resolve(config);
+        logger.info('libs.share-utils.import', `Imported animation project: ${data.config.name}`);
+        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: `导入成功: ${data.config.name}`, type: 'success' });
+        resolve(data);
       } catch (error) {
-        logger.error('libs.share-utils.import', 'Failed to parse animation config file', error);
-        dispatchEditorEvent(EDITOR_EVENTS.IMPORT_ERROR, { message: 'JSON 解析失败' });
+        logger.error('libs.share-utils.import', 'Failed to parse animation project file', error);
+        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: 'JSON 解析失败', type: 'error' });
         resolve(null);
       }
     };
     reader.onerror = () => {
-      logger.error('libs.share-utils.import', 'Failed to read animation config file', reader.error);
-      dispatchEditorEvent(EDITOR_EVENTS.IMPORT_ERROR, { message: '文件读取失败' });
+      logger.error('libs.share-utils.import', 'Failed to read animation project file', reader.error);
+      dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '文件读取失败', type: 'error' });
       resolve(null);
     };
     reader.readAsText(file);

@@ -9,6 +9,7 @@ export const EDITOR_EVENTS = {
   CONFIG_COMMITTED: 'editor:config-committed',
   IMPORT_SUCCESS: 'editor:import-success',
   IMPORT_ERROR: 'editor:import-error',
+  MESSAGE: 'editor:message',
 } as const;
 
 /** 事件类型联合，从 EDITOR_EVENTS 值自动推断 */

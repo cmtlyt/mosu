@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useHistoryTree } from '@/hooks/use-history-tree';
 import { useAIChat } from '@/hooks/use-ai-chat';
@@ -7,8 +7,15 @@ import { useEditorState } from '@/hooks/use-editor-state';
 import { ChatPanel } from '@/components/editor/chat-panel';
 import { PreviewPanel } from '@/components/editor/preview-panel';
 import { BranchPanel } from '@/components/editor/branch-panel';
+import { MessageToast } from '@/components/editor/message-toast';
 import { createInitialConfig, DEFAULT_PREVIEW_DOM } from '@/constants/templates';
-import { decodeConfigFromQuery } from '@/libs/share-utils';
+import {
+  decodeConfigFromQuery,
+  clearAnimationQuery,
+  exportProjectToFile,
+  importProjectFromFile,
+  encodeConfigToQuery,
+} from '@/libs/share-utils';
 import { dispatchEditorEvent, EDITOR_EVENTS, onEditorEvent } from '@/libs/event-bus';
 import { logger } from '@/libs/logger';
 import { sanitizeStyle } from '@/libs/dom-sanitizer';
@@ -36,26 +43,29 @@ function tryGetNodeData(
 
 function EditorPage() {
   const [animationId] = useState(() => {
-    const queryConfigFromUrl = decodeConfigFromQuery(globalThis.location.search);
-    return queryConfigFromUrl?.id ?? generateAnimationId();
+    const projectData = decodeConfigFromQuery(globalThis.location.search);
+    return projectData?.config?.id ?? generateAnimationId();
   });
 
   const [initialNodeData] = useState<HistoryNodeData>(() => {
-    const queryConfigFromInit = decodeConfigFromQuery(globalThis.location.search);
-    const config = queryConfigFromInit ?? createInitialConfig(animationId);
+    const projectData = decodeConfigFromQuery(globalThis.location.search);
+    if (projectData) {
+      clearAnimationQuery();
+    }
+    const config = projectData?.config ?? createInitialConfig(animationId);
     return {
       config,
-      label: queryConfigFromInit ? '导入的配置' : '初始版本',
+      label: projectData ? '导入的配置' : '初始版本',
       source: 'manual',
       timestamp: Date.now(),
       messages: [],
-      customDom: DEFAULT_PREVIEW_DOM,
-      customStyle: null,
+      customDom: projectData?.customDom ?? DEFAULT_PREVIEW_DOM,
+      customStyle: projectData?.customStyle ?? null,
     };
   });
 
   const { isReady, selectedNodeId, setSelectedNodeId } = useEditorState(animationId);
-  const [errorToast, setErrorToast] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { currentConfig, conversationHistory, commit, checkout, getNode, getSnapshot, getInheritedDomStyle } =
     useHistoryTree(initialNodeData);
@@ -81,19 +91,11 @@ function EditorPage() {
   useEffect(() => {
     const unsubStreamError = onEditorEvent(EDITOR_EVENTS.AI_STREAM_ERROR, (detail) => {
       const message = (detail as { message?: string })?.message ?? '未知错误';
-      setErrorToast(message);
-      setTimeout(() => setErrorToast(null), 5000);
-    });
-
-    const unsubImportError = onEditorEvent(EDITOR_EVENTS.IMPORT_ERROR, (detail) => {
-      const message = (detail as { message?: string })?.message ?? '导入失败';
-      setErrorToast(message);
-      setTimeout(() => setErrorToast(null), 5000);
+      dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: message, type: 'error' });
     });
 
     return () => {
       unsubStreamError();
-      unsubImportError();
     };
   }, []);
 
@@ -101,7 +103,7 @@ function EditorPage() {
     async (content: string) => {
       if (!isLoaded) {
         logger.warn('routes.editor.sendMessage', '模型尚未加载');
-        setErrorToast(modelError ?? '模型加载中，请稍候...');
+        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: modelError ?? '模型加载中，请稍候...', type: 'info' });
         return;
       }
 
@@ -121,7 +123,10 @@ function EditorPage() {
               `DOM patch partially applied: ${patchResult.applied} ok, ${patchResult.skipped} skipped`,
               patchResult.errors,
             );
-            setErrorToast(`DOM 变更部分应用成功，${patchResult.skipped} 条指令因选择器无效被跳过`);
+            dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, {
+              text: `DOM 变更部分应用成功，${patchResult.skipped} 条指令因选择器无效被跳过`,
+              type: 'info',
+            });
           }
           patchedDom = html;
         }
@@ -130,7 +135,10 @@ function EditorPage() {
           sanitizedStyle = sanitizeStyle(result.response.style);
           if (sanitizedStyle === null) {
             logger.warn('routes.editor.sanitize.style', 'AI generated style contains animation properties');
-            setErrorToast('AI 生成的样式包含动画属性，已忽略样式更新');
+            dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, {
+              text: 'AI 生成的样式包含动画属性，已忽略样式更新',
+              type: 'error',
+            });
           }
         }
 
@@ -163,6 +171,7 @@ function EditorPage() {
 
         setSelectedNodeId(newNodeId);
         dispatchEditorEvent(EDITOR_EVENTS.CONFIG_COMMITTED);
+        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '动画配置已更新', type: 'success' });
       }
     },
     [currentConfig, sendMessage, commit, isLoaded, modelError, messages, currentDom, currentStyle, setSelectedNodeId],
@@ -199,6 +208,64 @@ function EditorPage() {
     [checkout, setSelectedNodeId],
   );
 
+  const handleExport = useCallback(() => {
+    exportProjectToFile({
+      config: currentConfig,
+      customDom: currentDom,
+      customStyle: currentStyle,
+    });
+  }, [currentConfig, currentDom, currentStyle]);
+
+  const handleImportClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleImportFile = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) {
+        return;
+      }
+      const projectData = await importProjectFromFile(file);
+      if (projectData) {
+        const newNodeId = commit({
+          config: projectData.config,
+          label: `导入: ${projectData.config.name}`,
+          source: 'manual',
+          messages: [],
+          customDom: projectData.customDom,
+          customStyle: projectData.customStyle,
+        });
+        setSelectedNodeId(newNodeId);
+      }
+      // Reset input so the same file can be selected again
+      event.target.value = '';
+    },
+    [commit, setSelectedNodeId],
+  );
+
+  const handleShare = useCallback(() => {
+    const query = encodeConfigToQuery({
+      config: currentConfig,
+      customDom: currentDom,
+      customStyle: currentStyle,
+    });
+    if (!query) {
+      dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '生成分享链接失败', type: 'error' });
+      return;
+    }
+    const shareUrl = `${globalThis.location.origin}${globalThis.location.pathname}?${query}`;
+    navigator.clipboard.writeText(shareUrl).then(
+      () => {
+        logger.info('routes.editor.share', 'Share URL copied to clipboard');
+        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '分享链接已复制到剪贴板', type: 'success' });
+      },
+      () => {
+        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '复制链接失败，请手动复制地址栏链接', type: 'error' });
+      },
+    );
+  }, [currentConfig, currentDom, currentStyle]);
+
   const snapshot = getSnapshot();
 
   if (!isReady) {
@@ -211,6 +278,25 @@ function EditorPage() {
 
   return (
     <div className={styles.editorPage}>
+      <div className={styles.toolbar}>
+        <button type="button" className={styles.toolbarButton} onClick={handleImportClick}>
+          导入
+        </button>
+        <button type="button" className={styles.toolbarButton} onClick={handleExport}>
+          导出
+        </button>
+        <button type="button" className={styles.toolbarButton} onClick={handleShare}>
+          分享
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          className={styles.hiddenInput}
+          onChange={handleImportFile}
+          aria-label="导入动画配置文件"
+        />
+      </div>
       <ChatPanel
         messages={displayMessages}
         isStreaming={isStreaming}
@@ -230,25 +316,7 @@ function EditorPage() {
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
       />
-      {errorToast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: '#ef4444',
-            color: '#fff',
-            padding: '10px 20px',
-            borderRadius: 8,
-            fontSize: 14,
-            zIndex: 1000,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          }}
-        >
-          {errorToast}
-        </div>
-      )}
+      <MessageToast />
     </div>
   );
 }

@@ -46,14 +46,6 @@ export function PreviewPanel({ config, customDom, customStyle, onCustomChange }:
         <button
           type="button"
           className={styles.controlButton}
-          onClick={player.isPlaying ? player.pause : player.play}
-          disabled={config.tracks.length === 0}
-        >
-          {player.isPlaying ? '暂停' : '播放'}
-        </button>
-        <button
-          type="button"
-          className={styles.controlButton}
           onClick={handleReplay}
           disabled={config.tracks.length === 0}
         >
