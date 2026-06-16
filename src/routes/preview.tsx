@@ -22,19 +22,30 @@ function PreviewPage() {
   const [config, setConfig] = useState<AnimationConfig | null>(null);
   const [customDom, setCustomDom] = useState<string | null>(null);
   const [customStyle, setCustomStyle] = useState<string | null>(null);
+  const [progressMs, setProgressMs] = useState(0);
+  const [durationMs, setDurationMs] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const isDraggingRef = useRef(false);
 
-  // 初始化 SDK player 和 bridge
   useEffect(() => {
     const player = new AnimationPlayer({ autoPlay: true });
     playerRef.current = player;
 
-    // 初始化 bridge 并注册事件
     const bridge = createChildBridge();
 
-    // 监听完成事件通知父窗口
     const unsubComplete = player.on('complete', () => {
       bridge.emit('preview', 'animation-complete');
+      setProgressMs(player.getDuration());
+      setIsPlaying(false);
       logger.debug('routes.preview.anim-complete', 'Animation completed');
+    });
+
+    const unsubProgress = player.on('progress', ({ currentTime, duration }) => {
+      if (!isDraggingRef.current) {
+        setProgressMs(currentTime);
+      }
+      setDurationMs(duration);
+      setIsPlaying(player.isPlaying);
     });
 
     const unsubConfig = bridge.on<UpdateConfigPayload>('preview', 'update-config', (payload) => {
@@ -46,12 +57,12 @@ function PreviewPage() {
       setCustomStyle(payload.customStyle);
     });
 
-    // 通知父窗口预览页已就绪
     bridge.emit('preview', 'ready');
     logger.info('routes.preview.init', 'Preview page ready');
 
     return () => {
       unsubComplete();
+      unsubProgress();
       unsubConfig();
       unsubDom();
       bridge.destroy();
@@ -66,6 +77,31 @@ function PreviewPage() {
     if (container && config && player) {
       player.cancelAll();
       player.apply(container, config);
+      setProgressMs(0);
+      setIsPlaying(true);
+    }
+  };
+
+  const handlePlayPause = () => {
+    const player = playerRef.current;
+    if (!player) {
+      return;
+    }
+    if (player.isPlaying) {
+      player.pauseAll();
+      setIsPlaying(false);
+    } else {
+      player.playAll();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleProgressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number.parseFloat(event.target.value);
+    setProgressMs(value);
+    const player = playerRef.current;
+    if (player) {
+      player.seek(value);
     }
   };
 
@@ -84,7 +120,35 @@ function PreviewPage() {
           playerRef={playerRef}
         />
       </div>
+      <div className={styles.progressSection}>
+        <span className={styles.timeDisplay}>{Math.round(progressMs)}ms</span>
+        <input
+          type="range"
+          className={styles.progressBar}
+          min={0}
+          max={durationMs}
+          step={1}
+          value={progressMs}
+          aria-label="动画进度"
+          onMouseDown={() => {
+            isDraggingRef.current = true;
+          }}
+          onChange={handleProgressChange}
+          onMouseUp={() => {
+            isDraggingRef.current = false;
+          }}
+        />
+        <span className={styles.timeDisplay}>{Math.round(durationMs)}ms</span>
+      </div>
       <div className={styles.controls}>
+        <button
+          type="button"
+          className={styles.controlButton}
+          onClick={handlePlayPause}
+          disabled={config.tracks.length === 0}
+        >
+          {isPlaying ? '暂停' : '播放'}
+        </button>
         <button
           type="button"
           className={styles.controlButton}

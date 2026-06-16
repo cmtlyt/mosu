@@ -43,4 +43,51 @@ export class AnimationHandleImpl implements AnimationHandle {
     }
     this._isPlaying = false;
   }
+
+  /** 跳转到指定时间（毫秒），保持 seek 前的播放/暂停状态 */
+  public seek(time: number): void {
+    const wasRunning = this.animation.playState === 'running';
+    try {
+      this.animation.currentTime = time;
+    } catch {
+      // 动画未激活或已取消时赋值可能抛错，静默忽略
+      return;
+    }
+    // WAAPI 缺陷：finished 状态下设置 currentTime < duration 会自动变为 running
+    // 如果 seek 前不是 running，seek 后需要暂停以保持状态一致
+    if (!wasRunning && this.animation.playState === 'running') {
+      this.animation.pause();
+    }
+  }
+
+  /** 设置播放速度倍率 */
+  public setPlaybackRate(rate: number): void {
+    try {
+      this.animation.playbackRate = rate;
+    } catch {
+      // 动画未激活时赋值可能抛错，静默忽略
+    }
+  }
+
+  /** 获取当前播放时间（毫秒） */
+  public getCurrentTime(): number {
+    const { currentTime } = this.animation;
+    return typeof currentTime === 'number' ? currentTime : 0;
+  }
+
+  /** 获取动画总时长（毫秒） */
+  public getDuration(): number {
+    const { effect } = this.animation;
+    if (!effect) {
+      return 0;
+    }
+    const timing = effect.getComputedTiming();
+    const { duration } = timing;
+    return typeof duration === 'number' ? duration : 0;
+  }
+
+  /** 获取 WAAPI Animation 的播放状态 */
+  public getPlayState(): AnimationPlayState {
+    return this.animation.playState;
+  }
 }

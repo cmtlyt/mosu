@@ -15,15 +15,22 @@ export class AnimationPlayer {
   private emitter = new EventEmitter();
   private handles: AnimationHandleImpl[] = [];
   private observers = new Map<HTMLElement, MutationObserver>();
-  private hasEverApplied = false;
   private destroyed = false;
+  private progressRafId: number | null = null;
+  private completionTracked = false;
 
   private missingTargets = new Set<string>();
 
   public constructor(options?: PlayerOptions) {
     this.options = {
       autoPlay: options?.autoPlay ?? true,
+      playbackRate: options?.playbackRate ?? 1,
     };
+  }
+
+  /** 是否正在播放（从 handles 实时推导） */
+  public get isPlaying(): boolean {
+    return this.handles.some((handle) => handle.getPlayState() === 'running');
   }
 
   /**
@@ -37,7 +44,7 @@ export class AnimationPlayer {
     }
 
     // 先清理旧动画
-    this.cancelAll();
+    this.removeAll();
     this.missingTargets.clear();
 
     const newHandles: AnimationHandleImpl[] = [];
@@ -50,7 +57,7 @@ export class AnimationPlayer {
     }
 
     this.handles = newHandles;
-    this.hasEverApplied = true;
+    this.completionTracked = false;
 
     // 自动播放
     if (this.options.autoPlay && this.handles.length > 0) {
@@ -60,20 +67,21 @@ export class AnimationPlayer {
     // 监听 DOM 变化
     this.observeContainer(container);
 
-    // 监听完成事件
-    this.trackCompletion();
-
     return [...this.handles];
   }
 
   /** 播放所有当前动画 */
   public playAll(): void {
-    if (this.destroyed) {
+    if (this.destroyed || this.handles.length === 0) {
       return;
     }
+
     for (const handle of this.handles) {
       handle.play();
     }
+    this.startProgressTracking();
+    this.completionTracked = false;
+    this.trackCompletion();
   }
 
   /** 暂停所有当前动画 */
@@ -84,14 +92,93 @@ export class AnimationPlayer {
     for (const handle of this.handles) {
       handle.pause();
     }
+    this.stopProgressTracking();
   }
 
-  /** 取消所有动画并清空内部状态 */
+  /** 取消本次播放（暂停并重置到起点），保留 handles 以便重播 */
   public cancelAll(): void {
     for (const handle of this.handles) {
       handle.cancel();
     }
+    this.stopProgressTracking();
+    // cancel 后 WAAPI Animation 被重置，finished Promise 失效，需要重新 track
+    this.completionTracked = false;
+  }
+
+  /** 彻底移除所有动画，清空 handles 并释放 WAAPI 资源，不可重播 */
+  public removeAll(): void {
+    for (const handle of this.handles) {
+      handle.cancel();
+    }
     this.handles = [];
+    this.stopProgressTracking();
+    this.completionTracked = false;
+  }
+
+  /** 重播：seek 到起点并播放 */
+  public replay(): void {
+    if (this.destroyed || this.handles.length === 0) {
+      return;
+    }
+    this.seek(0);
+    this.completionTracked = false;
+    this.playAll();
+  }
+
+  /** 跳转到指定时间（毫秒），仅在 apply 后有效 */
+  public seek(time: number): void {
+    if (this.destroyed || this.handles.length === 0) {
+      return;
+    }
+    const duration = this.getDuration();
+    const clampedTime = Math.max(0, Math.min(time, duration));
+    for (const handle of this.handles) {
+      handle.seek(clampedTime);
+    }
+  }
+
+  /** 设置播放速度倍率（0.5 = 半速，2 = 双倍速） */
+  public setPlaybackRate(rate: number): void {
+    if (this.destroyed) {
+      return;
+    }
+    this.options.playbackRate = rate;
+    for (const handle of this.handles) {
+      handle.setPlaybackRate(rate);
+    }
+    if (rate <= 0 && this.isPlaying) {
+      this.pauseAll();
+    }
+  }
+
+  /** 获取当前播放时间（毫秒），返回所有轨道中最长的当前时间 */
+  public getCurrentTime(): number {
+    if (this.handles.length === 0) {
+      return 0;
+    }
+    let maxTime = 0;
+    for (const handle of this.handles) {
+      const currentTime = handle.getCurrentTime();
+      if (currentTime > maxTime) {
+        maxTime = currentTime;
+      }
+    }
+    return maxTime;
+  }
+
+  /** 获取总时长（毫秒），返回所有轨道中最长的持续时间 */
+  public getDuration(): number {
+    if (this.handles.length === 0) {
+      return 0;
+    }
+    let maxDuration = 0;
+    for (const handle of this.handles) {
+      const duration = handle.getDuration();
+      if (duration > maxDuration) {
+        maxDuration = duration;
+      }
+    }
+    return maxDuration;
   }
 
   /** 获取当前所有动画句柄 */
@@ -104,16 +191,43 @@ export class AnimationPlayer {
     return this.emitter.on(event, handler);
   }
 
-  /** 销毁播放器，取消所有动画并清理事件监听 */
+  /** 销毁播放器，移除所有动画并清理事件监听 */
   public destroy(): void {
     if (this.destroyed) {
       return;
     }
-    this.cancelAll();
+    this.removeAll();
     this.disconnectObservers();
+    this.stopProgressTracking();
     this.emitter.destroy();
     this.missingTargets.clear();
     this.destroyed = true;
+  }
+
+  private startProgressTracking(): void {
+    this.stopProgressTracking();
+    const tick = (): void => {
+      if (!this.isPlaying || this.destroyed) {
+        return;
+      }
+      const currentTime = this.getCurrentTime();
+      const duration = this.getDuration();
+      const percent = duration > 0 ? currentTime / duration : 0;
+      this.emitter.emit('progress', { currentTime, duration, percent });
+      if (currentTime < duration) {
+        this.progressRafId = requestAnimationFrame(tick);
+      } else {
+        this.progressRafId = null;
+      }
+    };
+    this.progressRafId = requestAnimationFrame(tick);
+  }
+
+  private stopProgressTracking(): void {
+    if (this.progressRafId !== null) {
+      cancelAnimationFrame(this.progressRafId);
+      this.progressRafId = null;
+    }
   }
 
   private applyTrack(container: HTMLElement, track: AnimationTrack): AnimationHandleImpl | null {
@@ -172,9 +286,10 @@ export class AnimationPlayer {
   }
 
   private trackCompletion(): void {
-    if (this.handles.length === 0) {
+    if (this.handles.length === 0 || this.completionTracked) {
       return;
     }
+    this.completionTracked = true;
 
     const finishedPromises = this.handles.map((handle) =>
       handle.finished.catch(() => {
@@ -186,11 +301,9 @@ export class AnimationPlayer {
       if (this.destroyed) {
         return;
       }
-      // 检查是否所有 handle 都已完成（未被中途 cancel 替换）
-      const allCompleted = this.handles.every((h) => !h.isPlaying);
-      if (allCompleted) {
-        this.emitter.emit('complete');
-      }
+      // Promise.allSettled 已确认所有 finished promise 都已 settled
+      this.stopProgressTracking();
+      this.emitter.emit('complete');
     });
   }
 
@@ -234,7 +347,7 @@ export class AnimationPlayer {
         });
 
         // 所有 handle 都被移除时触发 complete
-        if (this.handles.length === 0 && this.hasEverApplied) {
+        if (this.handles.length === 0) {
           this.emitter.emit('complete');
         }
       }

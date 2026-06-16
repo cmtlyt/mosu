@@ -16,6 +16,8 @@ export interface AnimationHandle {
   readonly isPlaying: boolean;
   /** 动画完成 Promise */
   readonly finished: Promise<void>;
+  /** 获取 WAAPI Animation 的播放状态 */
+  getPlayState(): AnimationPlayState;
 }
 
 /** 播放器事件映射 */
@@ -28,12 +30,16 @@ export interface PlayerEventMap {
   'target-missing': { selector: string; trackId: string };
   /** 应用动画失败 */
   error: { trackId: string; error: Error };
+  /** 进度更新（每帧触发，节流至 ~60fps） */
+  progress: { currentTime: number; duration: number; percent: number };
 }
 
 /** 播放器配置选项 */
 export interface PlayerOptions {
   /** 是否在 apply 后自动播放，默认 true */
   autoPlay?: boolean;
+  /** 全局速度倍率，默认 1 */
+  playbackRate?: number;
 }
 
 /** 事件处理器 */
