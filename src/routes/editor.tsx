@@ -7,15 +7,31 @@ import { useEditorState } from '@/hooks/use-editor-state';
 import { ChatPanel } from '@/components/editor/chat-panel';
 import { PreviewPanel } from '@/components/editor/preview-panel';
 import { BranchPanel } from '@/components/editor/branch-panel';
-import { createInitialConfig, PRESET_TEMPLATES, type PresetTemplate } from '@/constants/templates';
+import { createInitialConfig, DEFAULT_PREVIEW_DOM } from '@/constants/templates';
 import { decodeConfigFromQuery } from '@/libs/share-utils';
 import { dispatchEditorEvent, EDITOR_EVENTS, onEditorEvent } from '@/libs/event-bus';
 import { logger } from '@/libs/logger';
+import { sanitizeStyle } from '@/libs/dom-sanitizer';
+import { generateDomSummary } from '@/libs/dom-summary';
+import { mergeStyles } from '@/libs/style-merger';
+import { applyDomPatch } from '@/libs/dom-patcher';
 import type { HistoryNodeData } from '@/types/history';
+import type { AnimationConfig } from '@/types/animation';
 import styles from '@/styles/editor.module.css';
 
 function generateAnimationId(): string {
   return `anim-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function tryGetNodeData(
+  getNode: (nodeId: string) => { data: HistoryNodeData },
+  nodeId: string,
+): HistoryNodeData | null {
+  try {
+    return getNode(nodeId).data;
+  } catch {
+    return null;
+  }
 }
 
 function EditorPage() {
@@ -33,27 +49,25 @@ function EditorPage() {
       source: 'manual',
       timestamp: Date.now(),
       messages: [],
+      customDom: DEFAULT_PREVIEW_DOM,
+      customStyle: null,
     };
   });
 
   const { isReady, selectedNodeId, setSelectedNodeId } = useEditorState(animationId);
   const [errorToast, setErrorToast] = useState<string | null>(null);
 
-  const { currentConfig, conversationHistory, commit, checkout, getNode, getSnapshot } =
+  const { currentConfig, conversationHistory, commit, checkout, getNode, getSnapshot, getInheritedDomStyle } =
     useHistoryTree(initialNodeData);
 
   const { messages, isStreaming, sendMessage } = useAIChat();
   const { isLoaded, error: modelError } = useModelLoader();
 
-  const [templateIndex, setTemplateIndex] = useState(0);
-  const template = PRESET_TEMPLATES[templateIndex];
+  const selectedNodeData = selectedNodeId ? tryGetNodeData(getNode, selectedNodeId) : null;
 
-  const handleTemplateChange = useCallback((newTemplate: PresetTemplate) => {
-    const index = PRESET_TEMPLATES.findIndex((tpl) => tpl.name === newTemplate.name);
-    if (index !== -1) {
-      setTemplateIndex(index);
-    }
-  }, []);
+  const inherited = getInheritedDomStyle();
+  const currentDom = selectedNodeData?.customDom ?? inherited.customDom ?? initialNodeData.customDom;
+  const currentStyle = selectedNodeData?.customStyle ?? inherited.customStyle ?? initialNodeData.customStyle;
 
   const displayMessages = useMemo(() => {
     if (messages.length === 0) {
@@ -91,22 +105,82 @@ function EditorPage() {
         return;
       }
 
-      const result = await sendMessage(content, currentConfig, template.html);
+      const domSummary = currentDom ? generateDomSummary(currentDom) : '';
+      const result = await sendMessage(content, currentConfig, domSummary);
 
-      if (result.config) {
-        const newMessages = result.messages.filter((msg) => !messages.some((existing) => existing.id === msg.id));
+      if (result.response) {
+        let patchedDom: string | null = null;
+        let sanitizedStyle: string | null = null;
 
-        commit({
-          config: result.config,
-          label: result.config.name || content.slice(0, 20) + (content.length > 20 ? '...' : ''),
+        if (result.response.domPatch && result.response.domPatch.length > 0) {
+          const baseDom = currentDom ?? '';
+          const { html, result: patchResult } = applyDomPatch(baseDom, result.response.domPatch);
+          if (patchResult.skipped > 0) {
+            logger.warn(
+              'routes.editor.patch',
+              `DOM patch partially applied: ${patchResult.applied} ok, ${patchResult.skipped} skipped`,
+              patchResult.errors,
+            );
+            setErrorToast(`DOM 变更部分应用成功，${patchResult.skipped} 条指令因选择器无效被跳过`);
+          }
+          patchedDom = html;
+        }
+
+        if (result.response.style) {
+          sanitizedStyle = sanitizeStyle(result.response.style);
+          if (sanitizedStyle === null) {
+            logger.warn('routes.editor.sanitize.style', 'AI generated style contains animation properties');
+            setErrorToast('AI 生成的样式包含动画属性，已忽略样式更新');
+          }
+        }
+
+        const hasUpdate = patchedDom !== null || !!sanitizedStyle;
+        const newMessages = result.messages.map((msg) => ({
+          ...msg,
+          hasDomUpdate: msg.role === 'assistant' && hasUpdate,
+        }));
+
+        const messagesToCommit = newMessages.filter((msg) => !messages.some((existing) => existing.id === msg.id));
+
+        const fullConfig: AnimationConfig = {
+          version: '1.0',
+          id: generateAnimationId(),
+          name: result.response.config.name || content.slice(0, 20) + (content.length > 20 ? '...' : ''),
+          tracks: result.response.config.tracks,
+        };
+
+        const finalDom = patchedDom === null ? currentDom : patchedDom;
+        const finalStyle = mergeStyles(currentStyle, sanitizedStyle);
+
+        const newNodeId = commit({
+          config: fullConfig,
+          label: fullConfig.name,
           source: 'ai',
-          messages: newMessages,
+          messages: messagesToCommit,
+          customDom: finalDom,
+          customStyle: finalStyle,
         });
 
+        setSelectedNodeId(newNodeId);
         dispatchEditorEvent(EDITOR_EVENTS.CONFIG_COMMITTED);
       }
     },
-    [currentConfig, sendMessage, commit, isLoaded, modelError, messages, template],
+    [currentConfig, sendMessage, commit, isLoaded, modelError, messages, currentDom, currentStyle, setSelectedNodeId],
+  );
+
+  const handleCustomChange = useCallback(
+    (dom: string | null, style: string | null) => {
+      const newNodeId = commit({
+        config: currentConfig,
+        label: '手动更新预览内容',
+        source: 'manual',
+        messages: [],
+        customDom: dom,
+        customStyle: style,
+      });
+      setSelectedNodeId(newNodeId);
+    },
+    [currentConfig, commit, setSelectedNodeId],
   );
 
   const handleNodeClick = useCallback(
@@ -124,16 +198,6 @@ function EditorPage() {
     },
     [checkout, setSelectedNodeId],
   );
-
-  const selectedNodeData = selectedNodeId
-    ? (() => {
-        try {
-          return getNode(selectedNodeId).data;
-        } catch {
-          return null;
-        }
-      })()
-    : null;
 
   const snapshot = getSnapshot();
 
@@ -155,9 +219,9 @@ function EditorPage() {
       />
       <PreviewPanel
         config={currentConfig}
-        template={template}
-        templates={PRESET_TEMPLATES}
-        onTemplateChange={handleTemplateChange}
+        customDom={currentDom}
+        customStyle={currentStyle}
+        onCustomChange={handleCustomChange}
       />
       <BranchPanel
         snapshot={snapshot}

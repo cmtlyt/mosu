@@ -64,3 +64,15 @@
 .collapseButton:hover {
   opacity: 1;
 }
+
+.domUpdateTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 8px;
+  margin-left: 8px;
+}

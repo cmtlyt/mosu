@@ -6,6 +6,7 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
   animationName?: string;
+  hasDomUpdate?: boolean;
 }
 
 export interface HistoryNodeData {
@@ -14,4 +15,6 @@ export interface HistoryNodeData {
   source: 'manual' | 'ai';
   timestamp: number;
   messages: ChatMessage[];
+  customDom: string | null;
+  customStyle: string | null;
 }

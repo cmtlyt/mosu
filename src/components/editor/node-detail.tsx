@@ -17,8 +17,21 @@ export function NodeDetail({ data }: NodeDetailProps) {
         <span>Source: {data.source}</span>
         <span>Time: {new Date(data.timestamp).toLocaleTimeString()}</span>
       </div>
-      <div className={styles.configPreview}>
+      <div className={styles.detailPreview}>
+        <h4>Config</h4>
         <pre>{JSON.stringify(data.config, null, 2)}</pre>
+        {data.customDom && (
+          <>
+            <h4>DOM</h4>
+            <pre className={styles.codeBlock}>{data.customDom}</pre>
+          </>
+        )}
+        {data.customStyle && (
+          <>
+            <h4>Style</h4>
+            <pre className={styles.codeBlock}>{data.customStyle}</pre>
+          </>
+        )}
       </div>
     </div>
   );

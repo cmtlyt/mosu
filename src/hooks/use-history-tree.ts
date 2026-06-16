@@ -11,6 +11,7 @@ export interface UseHistoryTreeReturn {
   checkout: (nodeId: string) => void;
   getNode: (nodeId: string) => HistoryNodeInfo<HistoryNodeData>;
   getSnapshot: () => ReturnType<HistoryTree<HistoryNodeData>['getSnapshot']>;
+  getInheritedDomStyle: () => { customDom: string | null; customStyle: string | null };
   currentId: string;
 }
 
@@ -78,5 +79,34 @@ export function useHistoryTree(initialData: HistoryNodeData): UseHistoryTreeRetu
   const getNode = useCallback((nodeId: string) => tree.getNode(nodeId), [tree]);
   const getSnapshot = useCallback(() => tree.getSnapshot(), [tree]);
 
-  return { currentConfig, conversationHistory, commit, checkout, getNode, getSnapshot, currentId };
+  const getInheritedDomStyle = useCallback((): { customDom: string | null; customStyle: string | null } => {
+    // getPathData returns [current, parent, ..., root] for the checked-out path.
+    const pathData = tree.getPathData();
+    let customDom: string | null = null;
+    let customStyle: string | null = null;
+
+    for (const { customDom: nodeDom, customStyle: nodeStyle } of pathData) {
+      if (customDom === null && nodeDom !== null) {
+        customDom = nodeDom;
+      }
+      if (customStyle === null && nodeStyle !== null) {
+        customStyle = nodeStyle;
+      }
+      if (customDom !== null && customStyle !== null) {
+        break;
+      }
+    }
+
+    return { customDom, customStyle };
+  }, [tree]);
+  return {
+    currentConfig,
+    conversationHistory,
+    commit,
+    checkout,
+    getNode,
+    getSnapshot,
+    getInheritedDomStyle,
+    currentId,
+  };
 }

@@ -15,17 +15,32 @@
   margin-bottom: 12px;
 }
 
-.configPreview {
+.detailPreview {
   background: #f8fafc;
   border-radius: 6px;
   padding: 12px;
   overflow-x: auto;
 }
 
-.configPreview pre {
+.detailPreview h4 {
+  margin: 12px 0 4px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.detailPreview h4:first-child {
+  margin-top: 0;
+}
+
+.detailPreview pre {
   margin: 0;
   font-size: 12px;
   line-height: 1.4;
+}
+
+.codeBlock {
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .empty {

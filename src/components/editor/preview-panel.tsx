@@ -1,20 +1,21 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { AnimationConfig } from '@/types/animation';
-import type { PresetTemplate } from '@/constants/templates';
 import { useAnimationPlayer } from '@/hooks/use-animation-player';
 import { PreviewCanvas, type PreviewCanvasHandle } from '@/components/preview/preview-canvas';
+import { CustomDomPanel } from './custom-dom-panel';
 import styles from './preview-panel.module.css';
 
 interface PreviewPanelProps {
   config: AnimationConfig;
-  template: PresetTemplate;
-  templates: PresetTemplate[];
-  onTemplateChange: (template: PresetTemplate) => void;
+  customDom: string | null;
+  customStyle: string | null;
+  onCustomChange: (dom: string | null, style: string | null) => void;
 }
 
-export function PreviewPanel({ config, template, templates, onTemplateChange }: PreviewPanelProps) {
+export function PreviewPanel({ config, customDom, customStyle, onCustomChange }: PreviewPanelProps) {
   const player = useAnimationPlayer();
   const canvasRef = useRef<PreviewCanvasHandle>(null);
+  const [showCustomPanel, setShowCustomPanel] = useState(false);
 
   const handleReplay = () => {
     const container = canvasRef.current?.getContainer();
@@ -27,25 +28,19 @@ export function PreviewPanel({ config, template, templates, onTemplateChange }: 
     <div className={styles.previewPanel}>
       <div className={styles.header}>
         <span>预览</span>
-        <select
-          className={styles.templateSelect}
-          value={template.name}
-          onChange={(event) => {
-            const selected = templates.find((tpl) => tpl.name === event.target.value);
-            if (selected) {
-              onTemplateChange(selected);
-            }
-          }}
-        >
-          {templates.map((tpl) => (
-            <option key={tpl.name} value={tpl.name}>
-              {tpl.name}
-            </option>
-          ))}
-        </select>
+        <button type="button" className={styles.toggleButton} onClick={() => setShowCustomPanel((prev) => !prev)}>
+          {showCustomPanel ? '收起自定义' : '自定义 DOM/Style'}
+        </button>
       </div>
+      {showCustomPanel && <CustomDomPanel customDom={customDom} customStyle={customStyle} onApply={onCustomChange} />}
       <div className={styles.canvasWrapper}>
-        <PreviewCanvas ref={canvasRef} config={config} template={template} player={player} />
+        <PreviewCanvas
+          ref={canvasRef}
+          config={config}
+          customDom={customDom}
+          customStyle={customStyle}
+          player={player}
+        />
       </div>
       <div className={styles.controls}>
         <button

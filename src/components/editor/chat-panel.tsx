@@ -45,7 +45,7 @@ export function ChatPanel({ messages, isStreaming, onSendMessage }: ChatPanelPro
           type="text"
           value={inputValue}
           onInput={(e) => setInputValue((e.target as HTMLInputElement).value)}
-          placeholder={isStreaming ? 'AI 正在回复...' : '描述你想要的动画效果...'}
+          placeholder={isStreaming ? 'AI 正在回复...' : '描述动画效果或预览场景，如"创建三个卡片布局"...'}
           aria-label="动画描述输入框"
           disabled={false}
         />
