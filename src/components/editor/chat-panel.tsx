@@ -1,3 +1,4 @@
+import type { SubmitEvent } from 'react';
 import { useState, useRef, useEffect } from 'react';
 import type { ChatMessage } from '@/types/history';
 import type { AnimationConfig } from '@/types/animation';
@@ -19,7 +20,7 @@ export function ChatPanel({ messages, isStreaming, onSendMessage }: ChatPanelPro
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSubmit = (event: Event) => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = inputValue.trim();
     if (!trimmed || isStreaming) {
@@ -32,9 +33,10 @@ export function ChatPanel({ messages, isStreaming, onSendMessage }: ChatPanelPro
   return (
     <div className={styles.chatPanel}>
       <div className={styles.messages}>
-        {messages.map((msg) => (
-          <ChatMessageItem key={msg.id} message={msg} />
-        ))}
+        {messages.map((msg, index) => {
+          const isLastAssistant = msg.role === 'assistant' && index === messages.length - 1;
+          return <ChatMessageItem key={msg.id} message={msg} isStreaming={isLastAssistant && isStreaming} />;
+        })}
         <div ref={messagesEndRef} />
       </div>
       <form className={styles.inputArea} onSubmit={handleSubmit}>
@@ -43,11 +45,12 @@ export function ChatPanel({ messages, isStreaming, onSendMessage }: ChatPanelPro
           type="text"
           value={inputValue}
           onInput={(e) => setInputValue((e.target as HTMLInputElement).value)}
-          placeholder={isStreaming ? 'AI is responding...' : 'Describe your animation...'}
+          placeholder={isStreaming ? 'AI 正在回复...' : '描述你想要的动画效果...'}
+          aria-label="动画描述输入框"
           disabled={false}
         />
         <button className={styles.sendButton} type="submit" disabled={!inputValue.trim() || isStreaming}>
-          Send
+          发送
         </button>
       </form>
     </div>

@@ -5,6 +5,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: number;
+  animationName?: string;
 }
 
 export interface HistoryNodeData {

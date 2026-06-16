@@ -1,9 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import type { AnimationPlaybackControls } from 'motion';
 import type { AnimationConfig } from '@/types/animation';
-import { applyAnimation } from '@/libs/animation-applier';
+import { applyAnimation, type AnimationControl } from '@/libs/animation-applier';
 
-interface UseAnimationPlayerReturn {
+export interface UseAnimationPlayerReturn {
   play: () => void;
   pause: () => void;
   isPlaying: boolean;
@@ -11,7 +10,7 @@ interface UseAnimationPlayerReturn {
 }
 
 export function useAnimationPlayer(): UseAnimationPlayerReturn {
-  const animationsRef = useRef<AnimationPlaybackControls[]>([]);
+  const animationsRef = useRef<AnimationControl[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
 
   const stopAll = useCallback(() => {

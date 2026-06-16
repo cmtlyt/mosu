@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useHistoryTree } from '@/hooks/use-history-tree';
 import { useAIChat } from '@/hooks/use-ai-chat';
@@ -7,7 +7,7 @@ import { useEditorState } from '@/hooks/use-editor-state';
 import { ChatPanel } from '@/components/editor/chat-panel';
 import { PreviewPanel } from '@/components/editor/preview-panel';
 import { BranchPanel } from '@/components/editor/branch-panel';
-import { createInitialConfig, PRESET_TEMPLATES } from '@/constants/templates';
+import { createInitialConfig, PRESET_TEMPLATES, type PresetTemplate } from '@/constants/templates';
 import { decodeConfigFromQuery } from '@/libs/share-utils';
 import { dispatchEditorEvent, EDITOR_EVENTS, onEditorEvent } from '@/libs/event-bus';
 import { logger } from '@/libs/logger';
@@ -45,6 +45,25 @@ function EditorPage() {
   const { messages, isStreaming, sendMessage } = useAIChat();
   const { isLoaded, error: modelError } = useModelLoader();
 
+  const [templateIndex, setTemplateIndex] = useState(0);
+  const template = PRESET_TEMPLATES[templateIndex];
+
+  const handleTemplateChange = useCallback((newTemplate: PresetTemplate) => {
+    const index = PRESET_TEMPLATES.findIndex((tpl) => tpl.name === newTemplate.name);
+    if (index !== -1) {
+      setTemplateIndex(index);
+    }
+  }, []);
+
+  const displayMessages = useMemo(() => {
+    if (messages.length === 0) {
+      return conversationHistory;
+    }
+    const historyIds = new Set(conversationHistory.map((msg) => msg.id));
+    const streamingOnly = messages.filter((msg) => !historyIds.has(msg.id));
+    return [...conversationHistory, ...streamingOnly];
+  }, [conversationHistory, messages]);
+
   useEffect(() => {
     const unsubStreamError = onEditorEvent(EDITOR_EVENTS.AI_STREAM_ERROR, (detail) => {
       const message = (detail as { message?: string })?.message ?? '未知错误';
@@ -67,19 +86,19 @@ function EditorPage() {
   const handleSendMessage = useCallback(
     async (content: string) => {
       if (!isLoaded) {
-        logger.warn('routes.editor.sendMessage', 'Model not loaded yet');
+        logger.warn('routes.editor.sendMessage', '模型尚未加载');
         setErrorToast(modelError ?? '模型加载中，请稍候...');
         return;
       }
 
-      const result = await sendMessage(content, currentConfig);
+      const result = await sendMessage(content, currentConfig, template.html);
 
       if (result.config) {
         const newMessages = result.messages.filter((msg) => !messages.some((existing) => existing.id === msg.id));
 
         commit({
           config: result.config,
-          label: content.slice(0, 20) + (content.length > 20 ? '...' : ''),
+          label: result.config.name || content.slice(0, 20) + (content.length > 20 ? '...' : ''),
           source: 'ai',
           messages: newMessages,
         });
@@ -87,7 +106,7 @@ function EditorPage() {
         dispatchEditorEvent(EDITOR_EVENTS.CONFIG_COMMITTED);
       }
     },
-    [currentConfig, sendMessage, commit, isLoaded, modelError, messages],
+    [currentConfig, sendMessage, commit, isLoaded, modelError, messages, template],
   );
 
   const handleNodeClick = useCallback(
@@ -117,12 +136,11 @@ function EditorPage() {
     : null;
 
   const snapshot = getSnapshot();
-  const [template] = PRESET_TEMPLATES;
 
   if (!isReady) {
     return (
       <div className={styles.editorPage} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p>Initializing editor state...</p>
+        <p>编辑器初始化中...</p>
       </div>
     );
   }
@@ -130,12 +148,17 @@ function EditorPage() {
   return (
     <div className={styles.editorPage}>
       <ChatPanel
-        messages={conversationHistory}
+        messages={displayMessages}
         isStreaming={isStreaming}
         onSendMessage={handleSendMessage}
         currentConfig={currentConfig}
       />
-      <PreviewPanel config={currentConfig} template={template} />
+      <PreviewPanel
+        config={currentConfig}
+        template={template}
+        templates={PRESET_TEMPLATES}
+        onTemplateChange={handleTemplateChange}
+      />
       <BranchPanel
         snapshot={snapshot}
         selectedNodeId={selectedNodeId}

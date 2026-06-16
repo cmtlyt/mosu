@@ -22,7 +22,7 @@ export function BranchPanel({
   return (
     <div className={styles.branchPanel}>
       <div className={styles.treeSection}>
-        <div className={styles.header}>History Tree</div>
+        <div className={styles.header}>历史树</div>
         <BranchSvg
           snapshot={snapshot}
           selectedNodeId={selectedNodeId}
@@ -31,7 +31,7 @@ export function BranchPanel({
         />
       </div>
       <div className={styles.detailSection}>
-        <div className={styles.header}>Node Detail</div>
+        <div className={styles.header}>节点详情</div>
         <NodeDetail data={selectedNodeData} />
       </div>
     </div>

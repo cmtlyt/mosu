@@ -1,34 +1,52 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useLayoutEffect, useImperativeHandle, forwardRef } from 'react';
 import type { AnimationConfig } from '@/types/animation';
 import type { PresetTemplate } from '@/constants/templates';
-import { useAnimationPlayer } from '@/hooks/use-animation-player';
+import type { UseAnimationPlayerReturn } from '@/hooks/use-animation-player';
+import { logger } from '@/libs/logger';
 import styles from './preview-canvas.module.css';
+
+export interface PreviewCanvasHandle {
+  getContainer: () => HTMLDivElement | null;
+}
 
 interface PreviewCanvasProps {
   config: AnimationConfig;
   template: PresetTemplate;
+  player: UseAnimationPlayerReturn;
 }
 
-export function PreviewCanvas({ config, template }: PreviewCanvasProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { applyAndPlay } = useAnimationPlayer();
+export const PreviewCanvas = forwardRef<PreviewCanvasHandle, PreviewCanvasProps>(
+  ({ config, template, player }, ref) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const playerRef = useRef(player);
+    playerRef.current = player;
 
-  useEffect(() => {
-    if (containerRef.current && config.tracks.length > 0) {
-      // 重置 HTML 内容以重新应用动画
-      containerRef.current.innerHTML =
-        template.defaultConfig.tracks.length > 0
-          ? '<div className="animate-target" style="width:100px;height:100px;background:#4f86f7;border-radius:8px;"></div>'
-          : '';
-      applyAndPlay(containerRef.current, config);
-    }
-  }, [config, template, applyAndPlay]);
+    useImperativeHandle(ref, () => ({
+      getContainer: () => containerRef.current,
+    }));
 
-  return (
-    <div className={styles.canvas}>
-      <div ref={containerRef} className={styles.target}>
-        {config.tracks.length === 0 && <span className={styles.placeholder}>No animation tracks</span>}
+    useLayoutEffect(() => {
+      if (!containerRef.current) {
+        logger.warn('components.preview-canvas.effect', 'Container ref is null');
+        return;
+      }
+
+      containerRef.current.innerHTML = template.html;
+      logger.info('components.preview-canvas.effect', `DOM set, tracks: ${config.tracks.length}`);
+
+      if (config.tracks.length > 0) {
+        const targetEl = containerRef.current.querySelector(config.tracks[0].target);
+        logger.info('components.preview-canvas.effect', `Target element found: ${!!targetEl}`);
+        playerRef.current.applyAndPlay(containerRef.current, config);
+      }
+    }, [config, template]);
+
+    return (
+      <div className={styles.canvas}>
+        <div ref={containerRef} className={styles.target}>
+          {config.tracks.length === 0 && <span className={styles.placeholder}>暂无动画轨道</span>}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  },
+);

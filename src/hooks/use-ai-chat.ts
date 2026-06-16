@@ -12,18 +12,47 @@ interface UseAIChatReturn {
   sendMessage: (
     content: string,
     currentConfig: AnimationConfig,
+    domStructure?: string,
   ) => Promise<{ config: AnimationConfig | null; messages: ChatMessage[] }>;
 }
 
 const SYSTEM_PROMPT = `你是一个动画配置生成器。根据用户描述（支持中文和英文混合输入），输出符合以下 AnimationConfig Schema 的合法 JSON。
 
-规则：
+## 完整 Schema 示例（严格遵守此结构）
+
+{
+  "version": "1.0",
+  "id": "anim-xxx",
+  "name": "淡入上浮",
+  "tracks": [
+    {
+      "id": "track-1",
+      "target": ".my-element",
+      "keyframes": [
+        { "offset": 0, "opacity": 0, "transform": "translateY(20px)" },
+        { "offset": 1, "opacity": 1, "transform": "translateY(0)" }
+      ],
+      "options": {
+        "duration": 1000,
+        "delay": 0,
+        "easing": "ease-out",
+        "iterations": 1,
+        "direction": "normal",
+        "fillMode": "forwards"
+      }
+    }
+  ]
+}
+
+## 关键规则
+
 1. 仅输出合法 JSON，不包含 markdown 代码块标记，不包含解释文字。
-2. "target" 字段使用 CSS 选择器。
-3. 关键帧 "offset" 值必须在 [0, 1] 范围内。
-4. "duration" 单位为毫秒。
-5. 增量修改当前配置，保留未提及的轨道。
-6. 如果用户要求全新动画，忽略当前配置。`;
+2. "name" 字段必须根据用户需求生成一个简短、有意义的中文动画名称（如"淡入上浮"、"旋转缩放"、"弹跳入场"等），不要使用通用名称。
+3. 每个 track 必须包含 "id"、"target"、"keyframes"、"options" 四个字段。
+4. "options" 是独立对象，"duration"（毫秒）必须放在 "options" 内部，不能放在 track 顶层。
+5. keyframes 数组中每个元素必须包含 "offset"（0~1），其余属性以 CSS 属性名作为 key（如 "opacity"、"transform"），值直接写在该 key 下。禁止使用 "property"/"value" 这种键值对格式。
+6. "target" 使用 CSS 选择器。
+7. 增量修改当前配置时保留未提及的轨道；全新动画则忽略当前配置。`;
 
 function parseAnimationJSON(raw: string): AnimationConfig | null {
   try {
@@ -47,7 +76,7 @@ export function useAIChat(): UseAIChatReturn {
   const streamingRef = useRef(false);
 
   const sendMessage = useCallback(
-    async (content: string, currentConfig: AnimationConfig) => {
+    async (content: string, currentConfig: AnimationConfig, domStructure?: string) => {
       if (streamingRef.current) {
         logger.warn('hooks.use-ai-chat.send', 'Cannot send message while streaming');
         return { config: null, messages };
@@ -74,11 +103,12 @@ export function useAIChat(): UseAIChatReturn {
       dispatchEditorEvent(EDITOR_EVENTS.AI_STREAM_START);
 
       try {
+        const domInfo = domStructure ? `\n\n当前预览区域的 DOM 结构：\n${domStructure}` : '';
         const chatMessages: ChatCompletionMessageParam[] = [
           { role: 'system', content: SYSTEM_PROMPT },
           {
             role: 'user',
-            content: `当前动画配置：\n${JSON.stringify(currentConfig, null, 2)}\n\n用户需求：${content}`,
+            content: `当前动画配置：\n${JSON.stringify(currentConfig, null, 2)}${domInfo}\n\n用户需求：${content}`,
           },
         ];
 
@@ -92,7 +122,9 @@ export function useAIChat(): UseAIChatReturn {
 
         let finalMessages: ChatMessage[] = [];
         setMessages((prev) => {
-          finalMessages = prev.map((msg) => (msg.id === assistantId ? { ...msg, content: fullResponse } : msg));
+          finalMessages = prev.map((msg) =>
+            msg.id === assistantId ? { ...msg, content: fullResponse, animationName: parsedConfig?.name } : msg,
+          );
           return finalMessages;
         });
 

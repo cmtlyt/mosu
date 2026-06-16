@@ -18,7 +18,6 @@ export function useModelLoader(): UseModelLoaderReturn {
     getAIEngine()
       .then(() => {
         if (!cancelled) {
-          setIsLoaded(true);
           logger.info('hooks.use-model-loader.preload', 'Model preloaded successfully');
         }
       })
@@ -29,6 +28,7 @@ export function useModelLoader(): UseModelLoaderReturn {
           logger.error('hooks.use-model-loader.preload', 'Model preload failed', err);
         }
       });
+    setIsLoaded(true);
 
     return () => {
       cancelled = true;

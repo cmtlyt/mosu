@@ -1,9 +1,14 @@
-import { animate, type AnimationPlaybackControls } from 'motion';
 import type { AnimationConfig } from '@/types/animation';
 import { logger } from '@/libs/logger';
 
-export function applyAnimation(container: HTMLElement, config: AnimationConfig): AnimationPlaybackControls[] {
-  const controls: AnimationPlaybackControls[] = [];
+export interface AnimationControl {
+  play: () => void;
+  pause: () => void;
+  cancel: () => void;
+}
+
+export function applyAnimation(container: HTMLElement, config: AnimationConfig): AnimationControl[] {
+  const controls: AnimationControl[] = [];
 
   for (const track of config.tracks) {
     const element = container.querySelector(track.target);
@@ -12,27 +17,35 @@ export function applyAnimation(container: HTMLElement, config: AnimationConfig):
       continue;
     }
 
-    const keyframeProperties: Record<string, unknown[]> = {};
-    for (const keyframe of track.keyframes) {
-      const { offset: _offset, ...properties } = keyframe;
-      for (const [key, value] of Object.entries(properties)) {
-        if (!keyframeProperties[key]) {
-          keyframeProperties[key] = [];
-        }
-        keyframeProperties[key].push(value);
-      }
+    if (!track.options) {
+      logger.warn('libs.animation-applier.apply', `Track "${track.id}" missing options, skipping`);
+      continue;
     }
 
-    const control = animate(element as HTMLElement, keyframeProperties, {
-      duration: track.options.duration / 1000,
-      delay: track.options.delay ? track.options.delay / 1000 : undefined,
-      easing: track.options.easing,
-      repeat: track.options.iterations === 'Infinity' ? Infinity : (track.options.iterations ?? 1) - 1,
-      direction: track.options.direction,
-      fillMode: track.options.fillMode,
-    } as Parameters<typeof animate>[2]);
+    // 构建标准 WAAPI keyframes 数组
+    const keyframesArray = track.keyframes.map((keyframe) => {
+      const { offset, ...properties } = keyframe;
+      return { offset, ...properties } as Keyframe;
+    });
 
-    controls.push(control);
+    try {
+      const animation = (element as HTMLElement).animate(keyframesArray, {
+        duration: track.options.duration,
+        delay: track.options.delay ?? 0,
+        easing: track.options.easing ?? 'ease',
+        iterations: track.options.iterations === 'Infinity' ? Infinity : (track.options.iterations ?? 1),
+        direction: track.options.direction ?? 'normal',
+        fill: track.options.fillMode ?? 'none',
+      });
+
+      controls.push({
+        play: () => animation.play(),
+        pause: () => animation.pause(),
+        cancel: () => animation.cancel(),
+      });
+    } catch (error) {
+      logger.error('libs.animation-applier.apply', `Failed to animate track "${track.id}"`, error);
+    }
   }
 
   return controls;
