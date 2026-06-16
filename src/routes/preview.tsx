@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { PreviewCanvas, type PreviewCanvasHandle } from '@/components/preview/preview-canvas';
-import { useAnimationPlayer } from '@/hooks/use-animation-player';
+import { AnimationPlayer } from '@/libs/animation-sdk';
 import { createChildBridge } from '@/libs/iframe-bridge';
 import { logger } from '@/libs/logger';
 import type { AnimationConfig } from '@/types/animation';
@@ -17,15 +17,25 @@ interface UpdateDomPayload {
 }
 
 function PreviewPage() {
-  const player = useAnimationPlayer();
+  const playerRef = useRef<AnimationPlayer | null>(null);
   const canvasRef = useRef<PreviewCanvasHandle>(null);
   const [config, setConfig] = useState<AnimationConfig | null>(null);
   const [customDom, setCustomDom] = useState<string | null>(null);
   const [customStyle, setCustomStyle] = useState<string | null>(null);
 
-  // 初始化 bridge 并注册事件
+  // 初始化 SDK player 和 bridge
   useEffect(() => {
+    const player = new AnimationPlayer({ autoPlay: true });
+    playerRef.current = player;
+
+    // 初始化 bridge 并注册事件
     const bridge = createChildBridge();
+
+    // 监听完成事件通知父窗口
+    const unsubComplete = player.on('complete', () => {
+      bridge.emit('preview', 'animation-complete');
+      logger.debug('routes.preview.anim-complete', 'Animation completed');
+    });
 
     const unsubConfig = bridge.on<UpdateConfigPayload>('preview', 'update-config', (payload) => {
       setConfig(payload.config);
@@ -41,16 +51,21 @@ function PreviewPage() {
     logger.info('routes.preview.init', 'Preview page ready');
 
     return () => {
+      unsubComplete();
       unsubConfig();
       unsubDom();
       bridge.destroy();
+      player.destroy();
+      playerRef.current = null;
     };
   }, []);
 
   const handleReplay = () => {
     const container = canvasRef.current?.getContainer();
-    if (container && config) {
-      player.applyAndPlay(container, config);
+    const player = playerRef.current;
+    if (container && config && player) {
+      player.cancelAll();
+      player.apply(container, config);
     }
   };
 
@@ -66,7 +81,7 @@ function PreviewPage() {
           config={config}
           customDom={customDom}
           customStyle={customStyle}
-          player={player}
+          playerRef={playerRef}
         />
       </div>
       <div className={styles.controls}>

@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
+import { AnimationPlayer } from '@/libs/animation-sdk';
 import type { AnimationConfig } from '@/types/animation';
-import { applyAnimation, type AnimationControl } from '@/libs/animation-applier';
 
 export interface UseAnimationPlayerReturn {
   play: () => void;
@@ -10,42 +10,44 @@ export interface UseAnimationPlayerReturn {
 }
 
 export function useAnimationPlayer(): UseAnimationPlayerReturn {
-  const animationsRef = useRef<AnimationControl[]>([]);
+  const playerRef = useRef<AnimationPlayer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const stopAll = useCallback(() => {
-    for (const animation of animationsRef.current) {
-      animation.cancel();
-    }
-    animationsRef.current = [];
-    setIsPlaying(false);
-  }, []);
+  // 懒初始化，避免 SSR 问题
+  if (!playerRef.current) {
+    playerRef.current = new AnimationPlayer({ autoPlay: false });
+  }
+
+  const player = playerRef.current;
 
   const play = useCallback(() => {
-    for (const animation of animationsRef.current) {
-      animation.play();
-    }
+    player.playAll();
     setIsPlaying(true);
-  }, []);
+  }, [player]);
 
   const pause = useCallback(() => {
-    for (const animation of animationsRef.current) {
-      animation.pause();
-    }
+    player.pauseAll();
     setIsPlaying(false);
-  }, []);
+  }, [player]);
 
   const applyAndPlay = useCallback(
     (container: HTMLElement, config: AnimationConfig) => {
-      stopAll();
-      const animations = applyAnimation(container, config);
-      animationsRef.current = animations;
+      player.cancelAll();
+      player.apply(container, config);
+      player.playAll();
       setIsPlaying(true);
     },
-    [stopAll],
+    [player],
   );
 
-  useEffect(() => () => stopAll(), [stopAll]);
+  // 监听 SDK 的 complete 事件同步状态
+  useEffect(() => {
+    const unsub = player.on('complete', () => setIsPlaying(false));
+    return unsub;
+  }, [player]);
+
+  // 卸载时销毁
+  useEffect(() => () => player.destroy(), [player]);
 
   return { play, pause, isPlaying, applyAndPlay };
 }

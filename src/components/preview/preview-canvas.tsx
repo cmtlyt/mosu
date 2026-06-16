@@ -1,6 +1,6 @@
 import { useRef, useLayoutEffect, useEffect, useImperativeHandle, forwardRef } from 'react';
 import type { AnimationConfig } from '@/types/animation';
-import type { UseAnimationPlayerReturn } from '@/hooks/use-animation-player';
+import type { AnimationPlayer } from '@/libs/animation-sdk';
 import { logger } from '@/libs/logger';
 import styles from './preview-canvas.module.css';
 
@@ -12,15 +12,13 @@ interface PreviewCanvasProps {
   config: AnimationConfig;
   customDom: string | null;
   customStyle: string | null;
-  player: UseAnimationPlayerReturn;
+  playerRef: React.RefObject<AnimationPlayer | null>;
 }
 
 export const PreviewCanvas = forwardRef<PreviewCanvasHandle, PreviewCanvasProps>(
-  ({ config, customDom, customStyle, player }, ref) => {
+  ({ config, customDom, customStyle, playerRef }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const styleTagRef = useRef<HTMLStyleElement | null>(null);
-    const playerRef = useRef(player);
-    playerRef.current = player;
 
     useImperativeHandle(ref, () => ({
       getContainer: () => containerRef.current,
@@ -58,12 +56,15 @@ export const PreviewCanvas = forwardRef<PreviewCanvasHandle, PreviewCanvasProps>
 
     // Animation replay should happen when config changes.
     useEffect(() => {
-      if (!containerRef.current || config.tracks.length === 0 || containerRef.current.children.length === 0) {
+      const container = containerRef.current;
+      const player = playerRef.current;
+      if (!container || !player || config.tracks.length === 0 || container.children.length === 0) {
         return;
       }
       logger.info('components.preview-canvas.anim-effect', `Playing animation, tracks: ${config.tracks.length}`);
-      playerRef.current.applyAndPlay(containerRef.current, config);
-    }, [config]);
+      player.cancelAll();
+      player.apply(container, config);
+    }, [config, playerRef]);
 
     return (
       <div className={styles.canvas}>

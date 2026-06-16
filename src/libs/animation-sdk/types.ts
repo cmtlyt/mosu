@@ -1,0 +1,54 @@
+import type { AnimationConfig } from '@/types/animation';
+
+/** 单个动画轨道的控制句柄 */
+export interface AnimationHandle {
+  /** 动画轨道 ID */
+  readonly id: string;
+  /** 目标元素选择器 */
+  readonly target: string;
+  /** 播放 */
+  play(): void;
+  /** 暂停 */
+  pause(): void;
+  /** 取消并重置 */
+  cancel(): void;
+  /** 是否正在播放 */
+  readonly isPlaying: boolean;
+  /** 动画完成 Promise */
+  readonly finished: Promise<void>;
+}
+
+/** 播放器事件映射 */
+export interface PlayerEventMap {
+  /** 所有动画播放完成 */
+  complete: undefined;
+  /** 单个轨道动画完成 */
+  'track-complete': { trackId: string };
+  /** 应用动画时目标元素未找到 */
+  'target-missing': { selector: string; trackId: string };
+  /** 应用动画失败 */
+  error: { trackId: string; error: Error };
+}
+
+/** 播放器配置选项 */
+export interface PlayerOptions {
+  /** 是否在 apply 后自动播放，默认 true */
+  autoPlay?: boolean;
+}
+
+/** 事件处理器 */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type EventHandler<T> = T extends undefined ? () => void : (payload: T) => void;
+
+/** 取消订阅函数 */
+export type Unsubscribe = () => void;
+
+/** 内部使用的动画控制接口（不对外暴露） */
+export interface InternalAnimationControl {
+  play(): void;
+  pause(): void;
+  cancel(): void;
+  readonly finished: Promise<void>;
+}
+
+export type { AnimationConfig };
