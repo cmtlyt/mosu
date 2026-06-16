@@ -34,3 +34,11 @@
 .hiddenInput {
   display: none;
 }
+
+.previewColumn {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid #e2e8f0;
+}

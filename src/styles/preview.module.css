@@ -1,0 +1,43 @@
+.previewPage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+  background: var(--bg-primary, #fff);
+}
+
+.canvasWrapper {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 8px;
+  display: flex;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.controlButton {
+  padding: 6px 16px;
+  cursor: pointer;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4px;
+  background: var(--bg-secondary, #f5f5f5);
+}
+
+.controlButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: var(--text-secondary, #999);
+}

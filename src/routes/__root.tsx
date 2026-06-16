@@ -1,11 +1,7 @@
 import { Outlet, createRootRoute } from '@tanstack/react-router';
 
 function RootComponent() {
-  return (
-    <section>
-      <Outlet />
-    </section>
-  );
+  return <Outlet />;
 }
 
 export const Route = createRootRoute({

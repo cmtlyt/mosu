@@ -6,6 +6,7 @@ import { useModelLoader } from '@/hooks/use-model-loader';
 import { useEditorState } from '@/hooks/use-editor-state';
 import { ChatPanel } from '@/components/editor/chat-panel';
 import { PreviewPanel } from '@/components/editor/preview-panel';
+import { CustomDomPanel } from '@/components/editor/custom-dom-panel';
 import { BranchPanel } from '@/components/editor/branch-panel';
 import { MessageToast } from '@/components/editor/message-toast';
 import { createInitialConfig, DEFAULT_PREVIEW_DOM } from '@/constants/templates';
@@ -303,12 +304,10 @@ function EditorPage() {
         onSendMessage={handleSendMessage}
         currentConfig={currentConfig}
       />
-      <PreviewPanel
-        config={currentConfig}
-        customDom={currentDom}
-        customStyle={currentStyle}
-        onCustomChange={handleCustomChange}
-      />
+      <div className={styles.previewColumn}>
+        <CustomDomPanel customDom={currentDom} customStyle={currentStyle} onApply={handleCustomChange} />
+        <PreviewPanel config={currentConfig} customDom={currentDom} customStyle={currentStyle} />
+      </div>
       <BranchPanel
         snapshot={snapshot}
         selectedNodeId={selectedNodeId}

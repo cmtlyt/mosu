@@ -1,56 +1,123 @@
-import { useRef, useState } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import type { AnimationConfig } from '@/types/animation';
-import { useAnimationPlayer } from '@/hooks/use-animation-player';
-import { PreviewCanvas, type PreviewCanvasHandle } from '@/components/preview/preview-canvas';
-import { CustomDomPanel } from './custom-dom-panel';
+import { createParentBridge } from '@/libs/iframe-bridge';
+import { dispatchEditorEvent, EDITOR_EVENTS } from '@/libs/event-bus';
+import { logger } from '@/libs/logger';
 import styles from './preview-panel.module.css';
 
 interface PreviewPanelProps {
   config: AnimationConfig;
   customDom: string | null;
   customStyle: string | null;
-  onCustomChange: (dom: string | null, style: string | null) => void;
 }
 
-export function PreviewPanel({ config, customDom, customStyle, onCustomChange }: PreviewPanelProps) {
-  const player = useAnimationPlayer();
-  const canvasRef = useRef<PreviewCanvasHandle>(null);
-  const [showCustomPanel, setShowCustomPanel] = useState(false);
+/** 缓存的最新状态，用于 iframe 未就绪时暂存 */
+interface PendingState {
+  config: AnimationConfig;
+  customDom: string | null;
+  customStyle: string | null;
+}
 
-  const handleReplay = () => {
-    const container = canvasRef.current?.getContainer();
-    if (container) {
-      player.applyAndPlay(container, config);
+export function PreviewPanel({ config, customDom, customStyle }: PreviewPanelProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const bridgeRef = useRef<ReturnType<typeof createParentBridge> | null>(null);
+  const isReadyRef = useRef(false);
+  const pendingStateRef = useRef<PendingState | null>(null);
+  const [iframeError, setIframeError] = useState(false);
+
+  // 始终更新缓存，确保 ready 时能同步最新状态
+  useEffect(() => {
+    pendingStateRef.current = { config, customDom, customStyle };
+  }, [config, customDom, customStyle]);
+
+  // 初始化 bridge
+  useEffect(() => {
+    if (!iframeRef.current) {
+      return;
     }
-  };
+    const bridge = createParentBridge(iframeRef.current);
+    bridgeRef.current = bridge;
+
+    const unsubReady = bridge.on('preview', 'ready', () => {
+      isReadyRef.current = true;
+      logger.info('components.preview-panel.ready', 'Preview iframe is ready');
+      // 使用缓存的最新状态同步，避免闭包过期
+      const pending = pendingStateRef.current;
+      if (pending) {
+        bridge.emit('preview', 'update-config', { config: pending.config });
+        bridge.emit('preview', 'update-dom', { customDom: pending.customDom, customStyle: pending.customStyle });
+      }
+    });
+
+    const unsubError = bridge.on<{ message: string }>('preview', 'error', (payload) => {
+      logger.error('components.preview-panel.error', payload.message, new Error(payload.message));
+      dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: payload.message, type: 'error' });
+    });
+
+    const unsubAnimComplete = bridge.on('preview', 'animation-complete', () => {
+      logger.debug('components.preview-panel.anim-complete', 'Animation completed');
+    });
+
+    return () => {
+      unsubReady();
+      unsubError();
+      unsubAnimComplete();
+      bridge.destroy();
+      bridgeRef.current = null;
+    };
+  }, []);
+
+  // 当 props 变化且 iframe 已就绪时，通过 bridge 推送
+  useEffect(() => {
+    const bridge = bridgeRef.current;
+    if (!bridge || !isReadyRef.current) {
+      return;
+    }
+    bridge.emit('preview', 'update-config', { config });
+    bridge.emit('preview', 'update-dom', { customDom, customStyle });
+  }, [config, customDom, customStyle]);
+
+  const handleReload = useCallback(() => {
+    setIframeError(false);
+    isReadyRef.current = false;
+    if (iframeRef.current) {
+      iframeRef.current.src = `${import.meta.env.BASE_URL}preview`;
+    }
+  }, []);
+
+  const handleIframeError = useCallback(() => {
+    logger.error(
+      'components.preview-panel.iframe-error',
+      'Failed to load preview iframe',
+      new Error('iframe load failed'),
+    );
+    setIframeError(true);
+  }, []);
+
+  if (iframeError) {
+    return (
+      <div className={styles.previewPanel}>
+        <div className={styles.errorFallback}>
+          <p>预览加载失败</p>
+          <button type="button" className={styles.reloadButton} onClick={handleReload}>
+            重新加载
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.previewPanel}>
-      <div className={styles.header}>
-        <span>预览</span>
-        <button type="button" className={styles.toggleButton} onClick={() => setShowCustomPanel((prev) => !prev)}>
-          {showCustomPanel ? '收起自定义' : '自定义 DOM/Style'}
-        </button>
-      </div>
-      {showCustomPanel && <CustomDomPanel customDom={customDom} customStyle={customStyle} onApply={onCustomChange} />}
       <div className={styles.canvasWrapper}>
-        <PreviewCanvas
-          ref={canvasRef}
-          config={config}
-          customDom={customDom}
-          customStyle={customStyle}
-          player={player}
+        <iframe
+          ref={iframeRef}
+          src={`${import.meta.env.BASE_URL}preview`}
+          className={styles.iframe}
+          title="动画预览"
+          sandbox="allow-scripts allow-same-origin"
+          onError={handleIframeError}
         />
-      </div>
-      <div className={styles.controls}>
-        <button
-          type="button"
-          className={styles.controlButton}
-          onClick={handleReplay}
-          disabled={config.tracks.length === 0}
-        >
-          重播
-        </button>
       </div>
     </div>
   );

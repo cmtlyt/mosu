@@ -70,32 +70,36 @@ export function CustomDomPanel({ customDom, customStyle, onApply }: CustomDomPan
 
   return (
     <div className={styles.customPanel}>
-      <label className={styles.inputLabel} htmlFor="custom-dom">
-        DOM
-      </label>
-      <textarea
-        id="custom-dom"
-        className={styles.textarea}
-        rows={6}
-        placeholder="输入自定义 HTML 结构..."
-        aria-label="自定义 DOM 输入框"
-        value={domDraft}
-        onInput={(e) => setDomDraft((e.target as HTMLTextAreaElement).value)}
-      />
-      {domError && <p className={styles.errorText}>{domError}</p>}
-      <label className={styles.inputLabel} htmlFor="custom-style">
-        Style
-      </label>
-      <textarea
-        id="custom-style"
-        className={styles.textarea}
-        rows={4}
-        placeholder="输入自定义 CSS 样式（禁止动画属性）..."
-        aria-label="自定义 Style 输入框"
-        value={styleDraft}
-        onInput={(e) => setStyleDraft((e.target as HTMLTextAreaElement).value)}
-      />
-      {styleError && <p className={styles.errorText}>{styleError}</p>}
+      <div className={styles.inputGroup}>
+        <div className={styles.inputColumn}>
+          <label className={styles.inputLabel} htmlFor="custom-dom">
+            DOM
+          </label>
+          <textarea
+            id="custom-dom"
+            className={styles.textarea}
+            placeholder="输入自定义 HTML 结构..."
+            aria-label="自定义 DOM 输入框"
+            value={domDraft}
+            onInput={(e) => setDomDraft((e.target as HTMLTextAreaElement).value)}
+          />
+          {domError && <p className={styles.errorText}>{domError}</p>}
+        </div>
+        <div className={styles.inputColumn}>
+          <label className={styles.inputLabel} htmlFor="custom-style">
+            Style
+          </label>
+          <textarea
+            id="custom-style"
+            className={styles.textarea}
+            placeholder="输入自定义 CSS 样式（禁止动画属性）..."
+            aria-label="自定义 Style 输入框"
+            value={styleDraft}
+            onInput={(e) => setStyleDraft((e.target as HTMLTextAreaElement).value)}
+          />
+          {styleError && <p className={styles.errorText}>{styleError}</p>}
+        </div>
+      </div>
       <div className={styles.inputActions}>
         <button type="button" className={styles.controlButton} onClick={handleApply}>
           应用
