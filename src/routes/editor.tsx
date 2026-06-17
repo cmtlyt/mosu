@@ -16,31 +16,22 @@ import {
   exportProjectToFile,
   importProjectFromFile,
   encodeConfigToQuery,
-} from '@/libs/share-utils';
-import { dispatchEditorEvent, EDITOR_EVENTS, onEditorEvent } from '@/libs/event-bus';
+} from '@/utils/editor/share-utils';
+import { dispatchEditorEvent, EDITOR_EVENTS, onEditorEvent } from '@/utils/editor/event-bus';
 import { logger } from '@/libs/logger';
-import { sanitizeStyle } from '@/libs/dom-sanitizer';
-import { generateDomSummary } from '@/libs/dom-summary';
+import { generateDomSummary } from '@/utils/editor/dom-summary';
 import { mergeStyles } from '@/libs/style-merger';
-import { applyDomPatch } from '@/libs/dom-patcher';
+import {
+  processDomPatch,
+  processStyle,
+  processAnimationConfig,
+  buildFullConfig,
+  prepareMessagesForCommit,
+  generateAnimationId,
+  tryGetNodeData,
+} from '@/utils/editor/ai-response-processor';
 import type { HistoryNodeData } from '@/types/history';
-import type { AnimationConfig } from '@/types/animation';
 import styles from '@/styles/editor.module.css';
-
-function generateAnimationId(): string {
-  return `anim-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function tryGetNodeData(
-  getNode: (nodeId: string) => { data: HistoryNodeData },
-  nodeId: string,
-): HistoryNodeData | null {
-  try {
-    return getNode(nodeId).data;
-  } catch {
-    return null;
-  }
-}
 
 function EditorPage() {
   const [animationId] = useState(() => {
@@ -111,69 +102,33 @@ function EditorPage() {
       const domSummary = currentDom ? generateDomSummary(currentDom) : '';
       const result = await sendMessage(content, currentConfig, domSummary);
 
-      if (result.response) {
-        let patchedDom: string | null = null;
-        let sanitizedStyle: string | null = null;
-
-        if (result.response.domPatch && result.response.domPatch.length > 0) {
-          const baseDom = currentDom ?? '';
-          const { html, result: patchResult } = applyDomPatch(baseDom, result.response.domPatch);
-          if (patchResult.skipped > 0) {
-            logger.warn(
-              'routes.editor.patch',
-              `DOM patch partially applied: ${patchResult.applied} ok, ${patchResult.skipped} skipped`,
-              patchResult.errors,
-            );
-            dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, {
-              text: `DOM 变更部分应用成功，${patchResult.skipped} 条指令因选择器无效被跳过`,
-              type: 'info',
-            });
-          }
-          patchedDom = html;
-        }
-
-        if (result.response.style) {
-          sanitizedStyle = sanitizeStyle(result.response.style);
-          if (sanitizedStyle === null) {
-            logger.warn('routes.editor.sanitize.style', 'AI generated style contains animation properties');
-            dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, {
-              text: 'AI 生成的样式包含动画属性，已忽略样式更新',
-              type: 'error',
-            });
-          }
-        }
-
-        const hasUpdate = patchedDom !== null || !!sanitizedStyle;
-        const newMessages = result.messages.map((msg) => ({
-          ...msg,
-          hasDomUpdate: msg.role === 'assistant' && hasUpdate,
-        }));
-
-        const messagesToCommit = newMessages.filter((msg) => !messages.some((existing) => existing.id === msg.id));
-
-        const fullConfig: AnimationConfig = {
-          version: '1.0',
-          id: generateAnimationId(),
-          name: result.response.config.name || content.slice(0, 20) + (content.length > 20 ? '...' : ''),
-          tracks: result.response.config.tracks,
-        };
-
-        const finalDom = patchedDom === null ? currentDom : patchedDom;
-        const finalStyle = mergeStyles(currentStyle, sanitizedStyle);
-
-        const newNodeId = commit({
-          config: fullConfig,
-          label: fullConfig.name,
-          source: 'ai',
-          messages: messagesToCommit,
-          customDom: finalDom,
-          customStyle: finalStyle,
-        });
-
-        setSelectedNodeId(newNodeId);
-        dispatchEditorEvent(EDITOR_EVENTS.CONFIG_COMMITTED);
-        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '动画配置已更新', type: 'success' });
+      if (!result.response) {
+        return;
       }
+
+      const patchedDom = processDomPatch(result.response, currentDom);
+      const sanitizedStyle = processStyle(result.response);
+      const mergedConfig = processAnimationConfig(result.response, currentConfig);
+      const fullConfig = buildFullConfig(mergedConfig, content);
+
+      const hasUpdate = patchedDom !== null || !!sanitizedStyle;
+      const messagesToCommit = prepareMessagesForCommit(result.messages, messages, hasUpdate);
+
+      const finalDom = patchedDom === null ? currentDom : patchedDom;
+      const finalStyle = mergeStyles(currentStyle, sanitizedStyle);
+
+      const newNodeId = commit({
+        config: fullConfig,
+        label: fullConfig.name,
+        source: 'ai',
+        messages: messagesToCommit,
+        customDom: finalDom,
+        customStyle: finalStyle,
+      });
+
+      setSelectedNodeId(newNodeId);
+      dispatchEditorEvent(EDITOR_EVENTS.CONFIG_COMMITTED);
+      dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '动画配置已更新', type: 'success' });
     },
     [currentConfig, sendMessage, commit, isLoaded, modelError, messages, currentDom, currentStyle, setSelectedNodeId],
   );

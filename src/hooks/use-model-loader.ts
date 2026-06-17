@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAIEngine } from '@/libs/ai-engine';
+import { getAIEngine } from '@/utils/editor/ai-engine';
 import { logger } from '@/libs/logger';
 
 interface UseModelLoaderReturn {

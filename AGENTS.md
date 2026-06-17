@@ -21,5 +21,6 @@
 6. 页面级样式文件统一放到 `src/styles/` 目录下, 组件级样式跟随组件文件
 7. 文件和目录命名统一使用烤串命名法(kebab-case), 禁止使用驼峰命名
 8. 通用组件样式永远跟随组件文件, 页面专属组件/hooks/libs/types 必须放到 `components/<page>/`、`hooks/<page>/`、`libs/<page>/`、`types/<page>/` 等对应页面目录下进行隔离
-9. logger 的第一个参数是 pointer（模块点分格式），用于唯一标识日志点位，格式为 `'page.module.comp.feature'`，例如 `'editor.ai.chat.stream'`
-10. 必须修复所有类型错误，禁止提交带有 TypeScript 类型错误的代码
+9. `src/libs/` 目录用于存放与业务逻辑无关、可被任意项目引入和复用的通用逻辑（如 dom-sanitizer、animation-patcher 等）；`src/utils/<page>/` 目录用于存放特定页面的辅助方法（如 editor 页面的 AI 响应处理逻辑）；`src/utils/` 根目录用于存放跨页面但与当前项目强绑定的工具逻辑（如 iframe-bridge）
+10. logger 的第一个参数是 pointer（模块点分格式），用于唯一标识日志点位，格式为 `'page.module.comp.feature'`，例如 `'editor.ai.chat.stream'`
+11. 必须修复所有类型错误，禁止提交带有 TypeScript 类型错误的代码

@@ -34,7 +34,7 @@
 }
 
 .tagButton {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 4px;
   padding: 4px 12px;
@@ -45,6 +45,7 @@
   border-radius: 12px;
   cursor: pointer;
   transition: background 0.15s;
+  text-align: left;
 }
 
 .tagButton:hover {

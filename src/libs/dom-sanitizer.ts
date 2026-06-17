@@ -1,43 +1,17 @@
 import { logger } from '@/libs/logger';
 
-const ALLOWED_TAGS = new Set([
-  'div',
-  'span',
-  'p',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'ul',
-  'ol',
-  'li',
-  'section',
-  'article',
-  'header',
-  'footer',
-  'main',
-  'nav',
-  'strong',
-  'em',
-  'b',
-  'i',
-  'u',
-  'small',
-  'sub',
-  'sup',
-  'br',
-  'hr',
-  'img',
-  'table',
-  'thead',
-  'tbody',
-  'tr',
-  'th',
-  'td',
-  'input',
-  'label',
+const BLOCKED_TAGS = new Set([
+  'script',
+  'iframe',
+  'object',
+  'embed',
+  'form',
+  'link',
+  'meta',
+  'base',
+  'applet',
+  'svg',
+  'math',
 ]);
 
 const ALLOWED_ATTR_PREFIXES = ['data-', 'aria-'];
@@ -72,7 +46,7 @@ function isAllowedAttribute(name: string): boolean {
 function sanitizeElement(element: Element): void {
   const tagName = element.tagName.toLowerCase();
 
-  if (!ALLOWED_TAGS.has(tagName)) {
+  if (BLOCKED_TAGS.has(tagName)) {
     element.remove();
     return;
   }

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { PreviewCanvas, type PreviewCanvasHandle } from '@/components/preview/preview-canvas';
 import { AnimationPlayer } from '@/libs/animation-sdk';
-import { createChildBridge } from '@/libs/iframe-bridge';
+import { createChildBridge } from '@/utils/iframe-bridge';
 import { logger } from '@/libs/logger';
 import type { AnimationConfig } from '@/types/animation';
 import styles from '@/styles/preview.module.css';
