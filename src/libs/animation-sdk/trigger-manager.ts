@@ -109,24 +109,52 @@ export class TriggerManager {
 
     const allEnterGroups = [...hoverGroups, ...mouseenterGroups];
 
+    /** 判断 relatedTarget 是否仍在 targetElement 内部（含自身） */
+    const isStillInside = (targetElement: Element, relatedTarget: Element | null): boolean => {
+      if (!relatedTarget) {
+        return false;
+      }
+      return relatedTarget === targetElement || targetElement.contains(relatedTarget);
+    };
+
     const overHandler = (event: Event): void => {
+      const mouseEvent = event as MouseEvent;
+      const relatedTarget = mouseEvent.relatedTarget as Element | null;
+
       for (const group of allEnterGroups) {
-        if ((event.target as Element)?.closest?.(group.def.target)) {
+        const targetElement = (event.target as Element)?.closest?.(group.def.target);
+        if (targetElement) {
+          // 如果 relatedTarget 已在 target 内部，说明鼠标只是在内部移动，不重新触发
+          if (isStillInside(targetElement, relatedTarget)) {
+            continue;
+          }
           this.fireGroup(container, group);
         }
       }
     };
 
     const outHandler = (event: Event): void => {
-      // hover 离开时取消动画
+      const mouseEvent = event as MouseEvent;
+      const relatedTarget = mouseEvent.relatedTarget as Element | null;
+
+      // hover 离开时取消动画（需要判断是否真正离开了 target）
       for (const group of hoverGroups) {
-        if ((event.target as Element)?.closest?.(group.def.target)) {
+        const targetElement = (event.target as Element)?.closest?.(group.def.target);
+        if (targetElement) {
+          // 如果 relatedTarget 仍在 target 内部，说明鼠标没有真正离开
+          if (isStillInside(targetElement, relatedTarget)) {
+            continue;
+          }
           this.cancelGroupTracks(group);
         }
       }
-      // mouseleave 离开时触发动画
+      // mouseleave 离开时触发动画（同样需要判断是否真正离开）
       for (const group of mouseleaveGroups) {
-        if ((event.target as Element)?.closest?.(group.def.target)) {
+        const targetElement = (event.target as Element)?.closest?.(group.def.target);
+        if (targetElement) {
+          if (isStillInside(targetElement, relatedTarget)) {
+            continue;
+          }
           this.fireGroup(container, group);
         }
       }

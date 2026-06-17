@@ -8,13 +8,20 @@ import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
 import { SYSTEM_PROMPT } from '@/constants/ai';
 import type { ChatCompletionMessageParam } from '@mlc-ai/web-llm';
 
+export interface SendMessageOptions {
+  domContent?: string;
+  isFullDom?: boolean;
+  includeCss?: boolean;
+  currentStyle?: string | null;
+}
+
 interface UseAIChatReturn {
   messages: ChatMessage[];
   isStreaming: boolean;
   sendMessage: (
     content: string,
     currentConfig: AnimationConfig,
-    domSummary?: string,
+    options?: SendMessageOptions,
   ) => Promise<{ response: AIEditorResponse | null; messages: ChatMessage[] }>;
 }
 
@@ -56,7 +63,7 @@ export function useAIChat(): UseAIChatReturn {
   const streamingRef = useRef(false);
 
   const sendMessage = useCallback(
-    async (content: string, currentConfig: AnimationConfig, domSummary?: string) => {
+    async (content: string, currentConfig: AnimationConfig, options?: SendMessageOptions) => {
       if (streamingRef.current) {
         logger.warn('hooks.use-ai-chat.send', 'Cannot send message while streaming');
         return { response: null, messages };
@@ -83,14 +90,31 @@ export function useAIChat(): UseAIChatReturn {
       dispatchEditorEvent(EDITOR_EVENTS.AI_STREAM_START);
 
       try {
-        const domInfo = domSummary ? `\n\n当前预览区域的 DOM 结构摘要：\n${domSummary}` : '';
-        const chatMessages: ChatCompletionMessageParam[] = [
-          { role: 'system', content: SYSTEM_PROMPT },
-          {
+        const chatMessages: ChatCompletionMessageParam[] = [{ role: 'system', content: SYSTEM_PROMPT }];
+
+        // 如果启用 CSS 携带模式，追加独立的 user prompt 激活
+        if (options?.includeCss) {
+          chatMessages.push({
             role: 'user',
-            content: `当前动画配置：\n${JSON.stringify(currentConfig, null, 2)}${domInfo}\n\n用户需求：${content}`,
-          },
-        ];
+            content: '[系统指令] 已启用 CSS 携带模式，请按照 system prompt 中的"CSS 携带模式规则"返回全量 CSS。',
+          });
+        }
+
+        // 构建 DOM 信息
+        const domInfo = options?.domContent
+          ? options.isFullDom
+            ? `\n\n当前预览区域的完整 DOM：\n${options.domContent}`
+            : `\n\n当前预览区域的 DOM 结构摘要：\n${options.domContent}`
+          : '';
+
+        // 构建 CSS 信息
+        const cssInfo =
+          options?.includeCss && options.currentStyle ? `\n\n当前预览区域的 CSS 样式：\n${options.currentStyle}` : '';
+
+        chatMessages.push({
+          role: 'user',
+          content: `当前动画配置：\n${JSON.stringify(currentConfig, null, 2)}${domInfo}${cssInfo}\n\n用户需求：${content}`,
+        });
 
         const fullResponse = await streamChat(chatMessages, (chunk) => {
           setMessages((prev) =>

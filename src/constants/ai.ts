@@ -53,4 +53,7 @@ html 禁止 <script> 和事件属性。selector 基于 DOM 摘要中的 class/id
 - target 使用 CSS 选择器，匹配当前 DOM
 - style 允许 transition 和伪类动画（如 :hover），但禁止 animation 和 @keyframes（这些由 config.tracks 管理）
 - 增量修改时保留未提及的 track/triggerGroup
-- type 为 "auto" 的轨道无需配置 trigger 和 triggerGroup，直接省略即可，auto 轨道会在 apply 时自动播放`;
+- type 为 "auto" 的轨道无需配置 trigger 和 triggerGroup，直接省略即可，auto 轨道会在 apply 时自动播放
+
+## CSS 携带模式规则
+当用户启用"携带 CSS 样式"模式时（通过独立的 user prompt 标识），你返回的 style 字段将**替换**（而非追加到）现有样式。因此你**必须返回全量 CSS**，包含所有需要保留的样式规则，不能仅输出增量变更。`;

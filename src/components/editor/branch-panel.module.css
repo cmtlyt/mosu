@@ -17,9 +17,9 @@
 }
 
 .header {
-  padding: 12px 16px;
+  padding: 12rem 16rem;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 14rem;
   border-bottom: 1px solid #e2e8f0;
   position: sticky;
   top: 0;

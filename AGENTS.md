@@ -24,3 +24,4 @@
 9. `src/libs/` 目录用于存放与业务逻辑无关、可被任意项目引入和复用的通用逻辑（如 dom-sanitizer、animation-patcher 等）；`src/utils/<page>/` 目录用于存放特定页面的辅助方法（如 editor 页面的 AI 响应处理逻辑）；`src/utils/` 根目录用于存放跨页面但与当前项目强绑定的工具逻辑（如 iframe-bridge）
 10. logger 的第一个参数是 pointer（模块点分格式），用于唯一标识日志点位，格式为 `'page.module.comp.feature'`，例如 `'editor.ai.chat.stream'`
 11. 必须修复所有类型错误，禁止提交带有 TypeScript 类型错误的代码
+12. CSS 中使用 rem 单位替代 px（1rem = 1px），以下情况可保留 px：`border: 1px` 细线、`box-shadow` 阴影值、`transform` 变换值、根元素 `font-size: 1px` 基准值

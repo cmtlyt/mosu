@@ -1,50 +1,132 @@
 .detail {
-  padding: 16px;
+  padding: 16rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12rem;
 }
 
-.label {
-  margin: 0 0 8px;
-  font-size: 16px;
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+
+.fieldLabel {
+  font-size: 13rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+.input {
+  padding: 8rem 12rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6rem;
+  font-size: 14rem;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #4f86f7;
+}
+
+.textarea {
+  padding: 8rem 12rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6rem;
+  font-size: 12rem;
+  line-height: 1.4;
+  font-family: monospace;
+  resize: vertical;
+  outline: none;
+}
+
+.textarea:focus {
+  border-color: #4f86f7;
+}
+
+.error {
+  padding: 8rem 12rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6rem;
+  color: #dc2626;
+  font-size: 13rem;
+}
+
+.actions {
+  display: flex;
+  gap: 8rem;
+}
+
+.button {
+  padding: 8rem 16rem;
+  background: #4f86f7;
+  color: #fff;
+  border: none;
+  border-radius: 6rem;
+  cursor: pointer;
+  font-size: 14rem;
+}
+
+.button:hover {
+  background: #3b76e7;
+}
+
+.buttonSecondary {
+  padding: 8rem 16rem;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  border-radius: 6rem;
+  cursor: pointer;
+  font-size: 14rem;
+}
+
+.buttonSecondary:hover {
+  background: #e2e8f0;
 }
 
 .meta {
   display: flex;
-  gap: 16px;
-  font-size: 12px;
+  gap: 16rem;
+  font-size: 12rem;
   color: #64748b;
-  margin-bottom: 12px;
+  padding-top: 8rem;
+  border-top: 1px solid #e2e8f0;
 }
 
-.detailPreview {
+.collapsibleSection {
+  border: 1px solid #e2e8f0;
+  border-radius: 6rem;
+  overflow: hidden;
+}
+
+.collapsibleHeader {
+  padding: 8rem 12rem;
   background: #f8fafc;
-  border-radius: 6px;
-  padding: 12px;
-  overflow-x: auto;
-}
-
-.detailPreview h4 {
-  margin: 12px 0 4px;
-  font-size: 13px;
+  cursor: pointer;
+  font-size: 13rem;
+  font-weight: 500;
   color: #334155;
+  user-select: none;
 }
 
-.detailPreview h4:first-child {
-  margin-top: 0;
-}
-
-.detailPreview pre {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
+.collapsibleHeader:hover {
+  background: #f1f5f9;
 }
 
 .codeBlock {
+  margin: 0;
+  padding: 12rem;
+  font-size: 12rem;
+  line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-all;
+  background: #fff;
 }
 
 .empty {
-  padding: 32px;
+  padding: 32rem;
   text-align: center;
   color: #94a3b8;
 }

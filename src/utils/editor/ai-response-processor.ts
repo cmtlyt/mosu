@@ -4,6 +4,7 @@ import type { ChatMessage, HistoryNodeData } from '@/types/history';
 import { applyDomPatch } from '@/libs/dom-patcher';
 import { applyAnimationPatch } from '@/libs/animation-patcher';
 import { sanitizeStyle } from '@/libs/dom-sanitizer';
+import { mergeStyles } from '@/libs/style-merger';
 import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
 import { logger } from '@/libs/logger';
 
@@ -119,4 +120,24 @@ export function prepareMessagesForCommit(
   }));
 
   return newMessages.filter((msg) => !existingMessages.some((existing) => existing.id === msg.id));
+}
+
+/**
+ * 根据 CSS 携带模式计算最终的样式值
+ * @param currentStyle - 当前样式
+ * @param sanitizedStyle - AI 返回并经过 sanitize 的样式
+ * @param includeCss - 是否启用 CSS 携带模式
+ * @returns 最终应用的样式值
+ */
+export function computeStyles(
+  currentStyle: string | null,
+  sanitizedStyle: string | null,
+  includeCss: boolean,
+): string | null {
+  if (includeCss) {
+    // 替换模式：AI 返回的全量 CSS 直接替换，未返回则保持原值
+    return sanitizedStyle ?? currentStyle;
+  }
+  // 追加模式：通过 mergeStyles 合并
+  return mergeStyles(currentStyle, sanitizedStyle);
 }

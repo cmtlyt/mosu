@@ -1,15 +1,15 @@
 .customPanel {
-  padding: 12px 16px;
+  padding: 12rem 16rem;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 8rem;
   height: 350rem;
 }
 
 .inputGroup {
   display: flex;
-  gap: 12px;
+  gap: 12rem;
   flex: 1;
   min-height: 0;
 }
@@ -18,12 +18,12 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 4rem;
   min-width: 0;
 }
 
 .inputLabel {
-  font-size: 12px;
+  font-size: 12rem;
   font-weight: 500;
   color: #475569;
 }
@@ -31,32 +31,32 @@
 .textarea {
   width: 100%;
   flex: 1;
-  padding: 8px;
-  font-size: 12px;
+  padding: 8rem;
+  font-size: 12rem;
   font-family: monospace;
   border: 1px solid #cbd5e1;
-  border-radius: 4px;
+  border-radius: 4rem;
   resize: none;
   box-sizing: border-box;
-  min-height: 80px;
+  min-height: 80rem;
 }
 
 .inputActions {
   display: flex;
-  gap: 8px;
+  gap: 8rem;
 }
 
 .errorText {
-  font-size: 11px;
+  font-size: 11rem;
   color: #ef4444;
   margin: 0;
 }
 
 .controlButton {
-  padding: 6px 16px;
-  font-size: 13px;
+  padding: 6rem 16rem;
+  font-size: 13rem;
   border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border-radius: 6rem;
   background: #fff;
   cursor: pointer;
   transition: background 0.15s;

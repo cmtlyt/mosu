@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   background: #f8fafc;
-  min-height: 200px;
+  min-height: 200rem;
 }
 
 .target {
@@ -13,5 +13,5 @@
 
 .placeholder {
   color: #94a3b8;
-  font-size: 14px;
+  font-size: 14rem;
 }

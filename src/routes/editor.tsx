@@ -4,7 +4,7 @@ import { useHistoryTree } from '@/hooks/use-history-tree';
 import { useAIChat } from '@/hooks/use-ai-chat';
 import { useModelLoader } from '@/hooks/use-model-loader';
 import { useEditorState } from '@/hooks/use-editor-state';
-import { ChatPanel } from '@/components/editor/chat-panel';
+import { ChatPanel, type SendMessageOptions } from '@/components/editor/chat-panel';
 import { PreviewPanel } from '@/components/editor/preview-panel';
 import { CustomDomPanel } from '@/components/editor/custom-dom-panel';
 import { BranchPanel } from '@/components/editor/branch-panel';
@@ -20,7 +20,6 @@ import {
 import { dispatchEditorEvent, EDITOR_EVENTS, onEditorEvent } from '@/utils/editor/event-bus';
 import { logger } from '@/libs/logger';
 import { generateDomSummary } from '@/utils/editor/dom-summary';
-import { mergeStyles } from '@/libs/style-merger';
 import {
   processDomPatch,
   processStyle,
@@ -29,6 +28,7 @@ import {
   prepareMessagesForCommit,
   generateAnimationId,
   tryGetNodeData,
+  computeStyles,
 } from '@/utils/editor/ai-response-processor';
 import type { HistoryNodeData } from '@/types/history';
 import styles from '@/styles/editor.module.css';
@@ -71,6 +71,15 @@ function EditorPage() {
   const currentDom = selectedNodeData?.customDom ?? inherited.customDom ?? initialNodeData.customDom;
   const currentStyle = selectedNodeData?.customStyle ?? inherited.customStyle ?? initialNodeData.customStyle;
 
+  const commitAndSelect = useCallback(
+    (data: Omit<HistoryNodeData, 'timestamp'>) => {
+      const nodeId = commit(data);
+      setSelectedNodeId(nodeId);
+      return nodeId;
+    },
+    [commit, setSelectedNodeId],
+  );
+
   const displayMessages = useMemo(() => {
     if (messages.length === 0) {
       return conversationHistory;
@@ -92,15 +101,25 @@ function EditorPage() {
   }, []);
 
   const handleSendMessage = useCallback(
-    async (content: string) => {
+    async (content: string, options: SendMessageOptions) => {
       if (!isLoaded) {
         logger.warn('routes.editor.sendMessage', '模型尚未加载');
         dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: modelError ?? '模型加载中，请稍候...', type: 'info' });
         return;
       }
 
-      const domSummary = currentDom ? generateDomSummary(currentDom) : '';
-      const result = await sendMessage(content, currentConfig, domSummary);
+      const domContent = currentDom
+        ? options.includeFullDom
+          ? currentDom
+          : generateDomSummary(currentDom)
+        : undefined;
+
+      const result = await sendMessage(content, currentConfig, {
+        domContent,
+        isFullDom: options.includeFullDom,
+        includeCss: options.includeCss,
+        currentStyle,
+      });
 
       if (!result.response) {
         return;
@@ -115,9 +134,9 @@ function EditorPage() {
       const messagesToCommit = prepareMessagesForCommit(result.messages, messages, hasUpdate);
 
       const finalDom = patchedDom === null ? currentDom : patchedDom;
-      const finalStyle = mergeStyles(currentStyle, sanitizedStyle);
+      const finalStyle = computeStyles(currentStyle, sanitizedStyle, options.includeCss);
 
-      const newNodeId = commit({
+      commitAndSelect({
         config: fullConfig,
         label: fullConfig.name,
         source: 'ai',
@@ -126,16 +145,15 @@ function EditorPage() {
         customStyle: finalStyle,
       });
 
-      setSelectedNodeId(newNodeId);
       dispatchEditorEvent(EDITOR_EVENTS.CONFIG_COMMITTED);
       dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '动画配置已更新', type: 'success' });
     },
-    [currentConfig, sendMessage, commit, isLoaded, modelError, messages, currentDom, currentStyle, setSelectedNodeId],
+    [currentConfig, sendMessage, commitAndSelect, isLoaded, modelError, messages, currentDom, currentStyle],
   );
 
   const handleCustomChange = useCallback(
     (dom: string | null, style: string | null) => {
-      const newNodeId = commit({
+      commitAndSelect({
         config: currentConfig,
         label: '手动更新预览内容',
         source: 'manual',
@@ -143,9 +161,8 @@ function EditorPage() {
         customDom: dom,
         customStyle: style,
       });
-      setSelectedNodeId(newNodeId);
     },
-    [currentConfig, commit, setSelectedNodeId],
+    [currentConfig, commitAndSelect],
   );
 
   const handleNodeClick = useCallback(
@@ -184,7 +201,7 @@ function EditorPage() {
       }
       const projectData = await importProjectFromFile(file);
       if (projectData) {
-        const newNodeId = commit({
+        commitAndSelect({
           config: projectData.config,
           label: `导入: ${projectData.config.name}`,
           source: 'manual',
@@ -192,12 +209,11 @@ function EditorPage() {
           customDom: projectData.customDom,
           customStyle: projectData.customStyle,
         });
-        setSelectedNodeId(newNodeId);
       }
-      // Reset input so the same file can be selected again
+      // Reset input so the same file can be used again
       event.target.value = '';
     },
-    [commit, setSelectedNodeId],
+    [commitAndSelect],
   );
 
   const handleShare = useCallback(() => {
@@ -221,6 +237,14 @@ function EditorPage() {
       },
     );
   }, [currentConfig, currentDom, currentStyle]);
+
+  const handleNodeEditCommit = useCallback(
+    (editedData: Omit<HistoryNodeData, 'timestamp'>) => {
+      commitAndSelect(editedData);
+      dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '已从编辑创建新节点', type: 'success' });
+    },
+    [commitAndSelect],
+  );
 
   const snapshot = getSnapshot();
 
@@ -269,6 +293,7 @@ function EditorPage() {
         selectedNodeData={selectedNodeData}
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
+        onCommitEdit={handleNodeEditCommit}
       />
       <MessageToast />
     </div>

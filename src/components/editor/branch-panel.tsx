@@ -10,6 +10,7 @@ interface BranchPanelProps {
   selectedNodeData: HistoryNodeData | null;
   onNodeClick: (nodeId: string) => void;
   onNodeDoubleClick: (nodeId: string) => void;
+  onCommitEdit: (editedData: Omit<HistoryNodeData, 'timestamp'>) => void;
 }
 
 export function BranchPanel({
@@ -18,6 +19,7 @@ export function BranchPanel({
   selectedNodeData,
   onNodeClick,
   onNodeDoubleClick,
+  onCommitEdit,
 }: BranchPanelProps) {
   return (
     <div className={styles.branchPanel}>
@@ -32,7 +34,7 @@ export function BranchPanel({
       </div>
       <div className={styles.detailSection}>
         <div className={styles.header}>节点详情</div>
-        <NodeDetail data={selectedNodeData} />
+        <NodeDetail data={selectedNodeData} onCommitEdit={onCommitEdit} />
       </div>
     </div>
   );

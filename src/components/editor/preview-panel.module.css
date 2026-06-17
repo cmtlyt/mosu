@@ -23,15 +23,15 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: 12px;
+  gap: 12rem;
   color: var(--text-secondary, #999);
 }
 
 .reloadButton {
-  padding: 6px 16px;
-  font-size: 13px;
+  padding: 6rem 16rem;
+  font-size: 13rem;
   border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border-radius: 6rem;
   background: #fff;
   cursor: pointer;
   transition: background 0.15s;

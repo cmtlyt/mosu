@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 16px;
+  padding: 16rem;
   box-sizing: border-box;
   background: var(--bg-primary, #fff);
 }
@@ -11,21 +11,21 @@
   flex: 1;
   overflow: auto;
   border: 1px solid var(--border-color, #ddd);
-  border-radius: 8px;
+  border-radius: 8rem;
   display: flex;
 }
 
 .controls {
   display: flex;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 8rem;
+  margin-top: 12rem;
 }
 
 .controlButton {
-  padding: 6px 16px;
+  padding: 6rem 16rem;
   cursor: pointer;
   border: 1px solid var(--border-color, #ddd);
-  border-radius: 4px;
+  border-radius: 4rem;
   background: var(--bg-secondary, #f5f5f5);
 }
 
@@ -43,7 +43,7 @@
 }
 
 .progressBar {
-  margin-top: 12px;
+  margin-top: 12rem;
   width: 100%;
   cursor: pointer;
 }
@@ -51,14 +51,14 @@
 .progressSection {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 12px;
+  gap: 12rem;
+  margin-top: 12rem;
 }
 
 .timeDisplay {
-  font-size: 12px;
+  font-size: 12rem;
   color: var(--text-secondary, #666);
-  min-width: 60px;
+  min-width: 60rem;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
