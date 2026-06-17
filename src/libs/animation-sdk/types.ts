@@ -32,6 +32,10 @@ export interface PlayerEventMap {
   error: { trackId: string; error: Error };
   /** 进度更新（每帧触发，节流至 ~60fps） */
   progress: { currentTime: number; duration: number; percent: number };
+  /** 事件触发器已绑定到目标元素 */
+  'trigger-bound': { groupId: string; type: string; target: string };
+  /** 事件触发器已触发，动画开始播放 */
+  'trigger-fired': { trackId: string; type: string };
 }
 
 /** 播放器配置选项 */

@@ -1,8 +1,11 @@
 import type { AnimationConfig, AnimationTrack } from '@/types/animation';
 import { logger } from '@/libs/logger';
 import { EventEmitter } from './events';
-import { AnimationHandleImpl } from './handle';
+import type { AnimationHandleImpl } from './handle';
 import type { AnimationHandle, PlayerOptions, PlayerEventMap, EventHandler, Unsubscribe } from './types';
+import { resolveTriggerGroups, resolveTrackGroupId } from './trigger-resolver';
+import { TriggerManager } from './trigger-manager';
+import { createTrackAnimation, trackAllCompletion, observeContainer, startProgressTracking } from './player-utils';
 
 /**
  * 框架无关的动画播放器
@@ -20,12 +23,22 @@ export class AnimationPlayer {
   private completionTracked = false;
 
   private missingTargets = new Set<string>();
+  private triggerManager: TriggerManager;
 
   public constructor(options?: PlayerOptions) {
     this.options = {
       autoPlay: options?.autoPlay ?? true,
       playbackRate: options?.playbackRate ?? 1,
     };
+    this.triggerManager = new TriggerManager(
+      this.emitter,
+      (container, track) => this.applyTrack(container, track),
+      () => this.destroyed,
+    );
+  }
+
+  private applyTrack(container: HTMLElement, track: AnimationTrack): AnimationHandleImpl | null {
+    return createTrackAnimation(container, track, this.emitter, this.missingTargets);
   }
 
   /** 是否正在播放（从 handles 实时推导） */
@@ -43,21 +56,36 @@ export class AnimationPlayer {
       return [];
     }
 
-    // 先清理旧动画
+    // 先清理旧动画和旧触发器
     this.removeAll();
+    this.triggerManager.cleanup();
     this.missingTargets.clear();
 
-    const newHandles: AnimationHandleImpl[] = [];
+    // 解析触发器分组
+    const resolvedGroups = resolveTriggerGroups(config.tracks, config.triggerGroups);
+
+    const autoPlayHandles: AnimationHandleImpl[] = [];
 
     for (const track of config.tracks) {
+      // 检查轨道是否属于某个触发器分组
+      const groupId = resolveTrackGroupId(track);
+      if (groupId && resolvedGroups.has(groupId)) {
+        // 事件触发型轨道：不立即创建动画
+        continue;
+      }
+
+      // 自动播放型轨道：立即创建动画
       const handle = this.applyTrack(container, track);
       if (handle) {
-        newHandles.push(handle);
+        autoPlayHandles.push(handle);
       }
     }
 
-    this.handles = newHandles;
+    this.handles = autoPlayHandles;
     this.completionTracked = false;
+
+    // 绑定触发器事件
+    this.triggerManager.bindGroups(container, resolvedGroups);
 
     // 自动播放
     if (this.options.autoPlay && this.handles.length > 0) {
@@ -197,30 +225,20 @@ export class AnimationPlayer {
       return;
     }
     this.removeAll();
+    this.triggerManager.cleanup();
     this.disconnectObservers();
-    this.stopProgressTracking();
-    this.emitter.destroy();
-    this.missingTargets.clear();
     this.destroyed = true;
   }
 
   private startProgressTracking(): void {
     this.stopProgressTracking();
-    const tick = (): void => {
-      if (!this.isPlaying || this.destroyed) {
-        return;
-      }
-      const currentTime = this.getCurrentTime();
-      const duration = this.getDuration();
-      const percent = duration > 0 ? currentTime / duration : 0;
-      this.emitter.emit('progress', { currentTime, duration, percent });
-      if (currentTime < duration) {
-        this.progressRafId = requestAnimationFrame(tick);
-      } else {
-        this.progressRafId = null;
-      }
-    };
-    this.progressRafId = requestAnimationFrame(tick);
+    this.progressRafId = startProgressTracking(
+      () => this.getCurrentTime(),
+      () => this.getDuration(),
+      () => this.isPlaying,
+      () => this.destroyed,
+      (data) => this.emitter.emit('progress', data),
+    );
   }
 
   private stopProgressTracking(): void {
@@ -230,131 +248,30 @@ export class AnimationPlayer {
     }
   }
 
-  private applyTrack(container: HTMLElement, track: AnimationTrack): AnimationHandleImpl | null {
-    // 校验必要字段
-    if (!track.keyframes || track.keyframes.length === 0) {
-      logger.warn('libs.animation-sdk.player.apply-track', `Track "${track.id}" has empty keyframes, skipping`);
-      this.emitter.emit('error', { trackId: track.id, error: new Error('Empty keyframes') });
-      return null;
-    }
-
-    if (!track.options || typeof track.options.duration !== 'number' || track.options.duration < 0) {
-      logger.warn('libs.animation-sdk.player.apply-track', `Track "${track.id}" has invalid duration, skipping`);
-      this.emitter.emit('error', { trackId: track.id, error: new Error('Invalid duration') });
-      return null;
-    }
-
-    // 查找目标元素
-    const element = container.querySelector(track.target);
-    if (!element) {
-      if (!this.missingTargets.has(track.target)) {
-        logger.warn(
-          'libs.animation-sdk.player.apply-track',
-          `Target not found: ${track.target} for track "${track.id}"`,
-        );
-        this.emitter.emit('target-missing', { selector: track.target, trackId: track.id });
-        this.missingTargets.add(track.target);
-      }
-      return null;
-    }
-
-    // 构建 WAAPI keyframes
-    const keyframesArray = track.keyframes.map((keyframe) => {
-      const { offset, ...properties } = keyframe;
-      return { offset, ...properties } as Keyframe;
-    });
-
-    try {
-      const animation = (element as HTMLElement).animate(keyframesArray, {
-        duration: track.options.duration,
-        delay: track.options.delay ?? 0,
-        easing: track.options.easing ?? 'ease',
-        iterations: track.options.iterations === 'Infinity' ? Infinity : (track.options.iterations ?? 1),
-        direction: track.options.direction ?? 'normal',
-        fill: track.options.fillMode ?? 'none',
-      });
-
-      return new AnimationHandleImpl(track.id, track.target, animation);
-    } catch (error) {
-      logger.error('libs.animation-sdk.player.apply-track', `Failed to animate track "${track.id}"`, error);
-      this.emitter.emit('error', {
-        trackId: track.id,
-        error: error instanceof Error ? error : new Error(String(error)),
-      });
-      return null;
-    }
-  }
-
   private trackCompletion(): void {
     if (this.handles.length === 0 || this.completionTracked) {
       return;
     }
     this.completionTracked = true;
-
-    const finishedPromises = this.handles.map((handle) =>
-      handle.finished.catch(() => {
-        // 动画被取消时 finished 会 reject，视为完成
-      }),
+    trackAllCompletion(
+      this.handles,
+      this.emitter,
+      () => this.destroyed,
+      () => this.stopProgressTracking(),
     );
-
-    Promise.allSettled(finishedPromises).then(() => {
-      if (this.destroyed) {
-        return;
-      }
-      // Promise.allSettled 已确认所有 finished promise 都已 settled
-      this.stopProgressTracking();
-      this.emitter.emit('complete');
-    });
   }
 
   private observeContainer(container: HTMLElement): void {
-    // 同一 container 只创建一次 observer，后续复用
-    if (this.observers.has(container)) {
-      return;
-    }
-
-    const observer = new MutationObserver((mutations) => {
-      if (this.destroyed) {
-        return;
-      }
-
-      let changed = false;
-      for (const mutation of mutations) {
-        for (const removedNode of mutation.removedNodes) {
-          if (!(removedNode instanceof HTMLElement)) {
-            continue;
-          }
-
-          const affectedHandles = this.handles.filter((handle) => {
-            // 通过 target 选择器重新查找，如果找不到说明元素已被移除
-            const element = container.querySelector(handle.target);
-            return !element || removedNode === element || removedNode.contains(element);
-          });
-
-          for (const handle of affectedHandles) {
-            handle.cancel();
-            this.emitter.emit('track-complete', { trackId: handle.id });
-            changed = true;
-          }
-        }
-      }
-
-      if (changed) {
-        // 过滤掉已失效的 handle
-        this.handles = this.handles.filter((handle) => {
-          const element = container.querySelector(handle.target);
-          return element !== null;
-        });
-
-        // 所有 handle 都被移除时触发 complete
-        if (this.handles.length === 0) {
-          this.emitter.emit('complete');
-        }
-      }
-    });
-
-    observer.observe(container, { childList: true, subtree: true });
-    this.observers.set(container, observer);
+    observeContainer(
+      container,
+      this.observers,
+      () => this.handles,
+      (handles) => {
+        this.handles = handles;
+      },
+      this.emitter,
+      () => this.destroyed,
+    );
   }
 
   private disconnectObservers(): void {

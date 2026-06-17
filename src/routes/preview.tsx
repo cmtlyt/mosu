@@ -96,6 +96,29 @@ function PreviewPage() {
     }
   };
 
+  const handleStepBackward = () => {
+    const player = playerRef.current;
+    if (!player) {
+      return;
+    }
+    const currentTime = player.getCurrentTime();
+    const newTime = Math.max(0, currentTime - 10);
+    player.seek(newTime);
+    setProgressMs(newTime);
+  };
+
+  const handleStepForward = () => {
+    const player = playerRef.current;
+    if (!player) {
+      return;
+    }
+    const currentTime = player.getCurrentTime();
+    const duration = player.getDuration();
+    const newTime = Math.min(duration, currentTime + 10);
+    player.seek(newTime);
+    setProgressMs(newTime);
+  };
+
   const handleProgressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number.parseFloat(event.target.value);
     setProgressMs(value);
@@ -156,6 +179,24 @@ function PreviewPage() {
           disabled={config.tracks.length === 0}
         >
           重播
+        </button>
+        <button
+          type="button"
+          className={styles.controlButton}
+          onClick={handleStepBackward}
+          disabled={config.tracks.length === 0}
+          aria-label="后退10ms"
+        >
+          -10ms
+        </button>
+        <button
+          type="button"
+          className={styles.controlButton}
+          onClick={handleStepForward}
+          disabled={config.tracks.length === 0}
+          aria-label="前进10ms"
+        >
+          +10ms
         </button>
       </div>
     </div>
