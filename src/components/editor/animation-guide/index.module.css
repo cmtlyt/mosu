@@ -1,0 +1,42 @@
+.container {
+  padding: 8rem 0;
+}
+
+.header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12rem;
+}
+
+.copyButton {
+  padding: 6rem 12rem;
+  font-size: 13rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6rem;
+  background: #fff;
+  cursor: pointer;
+  color: #334155;
+}
+
+.copyButton:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.content {
+  margin: 0;
+  padding: 16rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8rem;
+  overflow-x: auto;
+  font-size: 13rem;
+  line-height: 1.7;
+  color: #334155;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.content code {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+}

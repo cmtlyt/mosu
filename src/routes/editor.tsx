@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useHistoryTree } from '@/hooks/use-history-tree';
 import { useAIChat } from '@/hooks/use-ai-chat';
@@ -9,14 +9,9 @@ import { PreviewPanel } from '@/components/editor/preview-panel';
 import { CustomDomPanel } from '@/components/editor/custom-dom-panel';
 import { BranchPanel } from '@/components/editor/branch-panel';
 import { MessageToast } from '@/components/editor/message-toast';
+import { EditorToolbar } from '@/components/editor/editor-toolbar';
 import { createInitialConfig, DEFAULT_PREVIEW_DOM } from '@/constants/templates';
-import {
-  decodeConfigFromQuery,
-  clearAnimationQuery,
-  exportProjectToFile,
-  importProjectFromFile,
-  encodeConfigToQuery,
-} from '@/utils/editor/share-utils';
+import { decodeConfigFromQuery, clearAnimationQuery } from '@/utils/editor/share-utils';
 import { dispatchEditorEvent, EDITOR_EVENTS, onEditorEvent } from '@/utils/editor/event-bus';
 import { logger } from '@/libs/logger';
 import { generateDomSummary } from '@/utils/editor/dom-summary';
@@ -30,10 +25,18 @@ import {
   tryGetNodeData,
   computeStyles,
 } from '@/utils/editor/ai-response-processor';
+import type { AnimationConfig } from '@/types/animation';
 import type { HistoryNodeData } from '@/types/history';
 import styles from '@/styles/editor.module.css';
 
 function EditorPage() {
+  useEffect(() => {
+    document.title = 'Mosu Editor';
+    return () => {
+      document.title = 'Mosu';
+    };
+  }, []);
+
   const [animationId] = useState(() => {
     const projectData = decodeConfigFromQuery(globalThis.location.search);
     return projectData?.config?.id ?? generateAnimationId();
@@ -57,7 +60,6 @@ function EditorPage() {
   });
 
   const { isReady, selectedNodeId, setSelectedNodeId } = useEditorState(animationId);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { currentConfig, conversationHistory, commit, checkout, getNode, getSnapshot, getInheritedDomStyle } =
     useHistoryTree(initialNodeData);
@@ -182,62 +184,19 @@ function EditorPage() {
     [checkout, setSelectedNodeId],
   );
 
-  const handleExport = useCallback(() => {
-    exportProjectToFile({
-      config: currentConfig,
-      customDom: currentDom,
-      customStyle: currentStyle,
-    });
-  }, [currentConfig, currentDom, currentStyle]);
-
-  const handleImportClick = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleImportFile = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) {
-        return;
-      }
-      const projectData = await importProjectFromFile(file);
-      if (projectData) {
-        commitAndSelect({
-          config: projectData.config,
-          label: `导入: ${projectData.config.name}`,
-          source: 'manual',
-          messages: [],
-          customDom: projectData.customDom,
-          customStyle: projectData.customStyle,
-        });
-      }
-      // Reset input so the same file can be used again
-      event.target.value = '';
+  const handleImport = useCallback(
+    (config: AnimationConfig, customDom: string | null, customStyle: string | null) => {
+      commitAndSelect({
+        config,
+        label: `导入: ${config.name}`,
+        source: 'manual',
+        messages: [],
+        customDom,
+        customStyle,
+      });
     },
     [commitAndSelect],
   );
-
-  const handleShare = useCallback(() => {
-    const query = encodeConfigToQuery({
-      config: currentConfig,
-      customDom: currentDom,
-      customStyle: currentStyle,
-    });
-    if (!query) {
-      dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '生成分享链接失败', type: 'error' });
-      return;
-    }
-    const shareUrl = `${globalThis.location.origin}${globalThis.location.pathname}?${query}`;
-    navigator.clipboard.writeText(shareUrl).then(
-      () => {
-        logger.info('routes.editor.share', 'Share URL copied to clipboard');
-        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '分享链接已复制到剪贴板', type: 'success' });
-      },
-      () => {
-        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '复制链接失败，请手动复制地址栏链接', type: 'error' });
-      },
-    );
-  }, [currentConfig, currentDom, currentStyle]);
 
   const handleNodeEditCommit = useCallback(
     (editedData: Omit<HistoryNodeData, 'timestamp'>) => {
@@ -259,25 +218,12 @@ function EditorPage() {
 
   return (
     <div className={styles.editorPage}>
-      <div className={styles.toolbar}>
-        <button type="button" className={styles.toolbarButton} onClick={handleImportClick}>
-          导入
-        </button>
-        <button type="button" className={styles.toolbarButton} onClick={handleExport}>
-          导出
-        </button>
-        <button type="button" className={styles.toolbarButton} onClick={handleShare}>
-          分享
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          className={styles.hiddenInput}
-          onChange={handleImportFile}
-          aria-label="导入动画配置文件"
-        />
-      </div>
+      <EditorToolbar
+        currentConfig={currentConfig}
+        currentDom={currentDom}
+        currentStyle={currentStyle}
+        onImport={handleImport}
+      />
       <ChatPanel
         messages={displayMessages}
         isStreaming={isStreaming}

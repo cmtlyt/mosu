@@ -6,35 +6,6 @@
   overflow: hidden;
 }
 
-.toolbar {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 8rem;
-  padding: 8rem 16rem;
-  border-bottom: 1px solid #e2e8f0;
-  background: #fff;
-}
-
-.toolbarButton {
-  padding: 6rem 14rem;
-  font-size: 13rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6rem;
-  background: #fff;
-  cursor: pointer;
-  color: #334155;
-}
-
-.toolbarButton:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
-}
-
-.hiddenInput {
-  display: none;
-}
-
 .previewColumn {
   display: flex;
   flex-direction: column;

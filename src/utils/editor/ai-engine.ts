@@ -5,6 +5,8 @@ import { logger } from '@/libs/logger';
 import { detectModelTier } from './model-detect';
 
 const LOCAL_AI_PROXY_URL = 'http://localhost:3001/v1/chat/completions';
+const AI_MODE_KEY = 'mosu_ai_mode';
+const AI_BASE_URL_KEY = 'mosu_ai_base_url';
 
 let engineInstance: MLCEngineInterface | null = null;
 let currentModelId: string | null = null;
@@ -35,27 +37,8 @@ export const getAIEngine = tryCallFunc(
   },
 );
 
-async function streamChatViaProxy(
-  messages: ChatCompletionMessageParam[],
-  onChunk: (text: string) => void,
-): Promise<string> {
-  logger.info('libs.ai-engine.proxy', 'Using local AI proxy fallback');
-
-  const response = await fetch(LOCAL_AI_PROXY_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messages,
-      stream: true,
-      temperature: 0.7,
-    }),
-  });
-
-  if (!response.ok || !response.body) {
-    throw new Error(`AI proxy responded with status ${response.status}`);
-  }
-
-  const reader = response.body.getReader();
+async function parseSSEStream(body: ReadableStream<Uint8Array>, onChunk: (text: string) => void): Promise<string> {
+  const reader = body.getReader();
   const decoder = new TextDecoder();
   let fullResponse = '';
   let buffer = '';
@@ -91,10 +74,64 @@ async function streamChatViaProxy(
   return fullResponse;
 }
 
+async function streamChatViaApi(
+  baseUrl: string,
+  messages: ChatCompletionMessageParam[],
+  onChunk: (text: string) => void,
+): Promise<string> {
+  logger.info('libs.ai-engine.api', `Using API mode with base URL: ${baseUrl}`);
+
+  const response = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messages,
+      stream: true,
+      temperature: 0.7,
+    }),
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`API responded with status ${response.status}`);
+  }
+
+  return parseSSEStream(response.body, onChunk);
+}
+
+async function streamChatViaProxy(
+  messages: ChatCompletionMessageParam[],
+  onChunk: (text: string) => void,
+): Promise<string> {
+  logger.info('libs.ai-engine.proxy', 'Using local AI proxy fallback');
+
+  const response = await fetch(LOCAL_AI_PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messages,
+      stream: true,
+      temperature: 0.7,
+    }),
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`AI proxy responded with status ${response.status}`);
+  }
+
+  return parseSSEStream(response.body, onChunk);
+}
+
 export async function streamChat(
   messages: ChatCompletionMessageParam[],
   onChunk: (text: string) => void,
 ): Promise<string> {
+  const mode = localStorage.getItem(AI_MODE_KEY) ?? 'webllm';
+  const baseUrl = localStorage.getItem(AI_BASE_URL_KEY) ?? '';
+
+  if (mode === 'api' && baseUrl) {
+    return streamChatViaApi(baseUrl, messages, onChunk);
+  }
+
   if (useFallback) {
     return streamChatViaProxy(messages, onChunk);
   }
