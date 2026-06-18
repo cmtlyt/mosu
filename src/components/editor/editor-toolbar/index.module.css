@@ -9,11 +9,39 @@
   background: #fff;
 }
 
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 16rem;
+}
+
 .toolbarTitle {
   font-size: 16rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0;
+}
+
+.toolbarNav {
+  display: flex;
+  align-items: center;
+  gap: 12rem;
+}
+
+.navLink {
+  font-size: 14rem;
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.navLink:hover {
+  color: #334155;
+}
+
+.navLinkActive {
+  color: #4f86f7;
+  font-weight: 500;
 }
 
 .toolbarActions {

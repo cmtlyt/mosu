@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { Link } from '@tanstack/react-router';
 import type { AnimationConfig } from '@/types/animation';
 import { LocalhostServerTemplate } from '@/components/editor/localhost-server-template';
 import { AnimationGuide } from '@/components/editor/animation-guide';
@@ -90,7 +91,17 @@ export function EditorToolbar({ currentConfig, currentDom, currentStyle, onImpor
   return (
     <>
       <div className={styles.toolbar}>
-        <h1 className={styles.toolbarTitle}>Mosu Editor</h1>
+        <div className={styles.toolbarLeft}>
+          <h1 className={styles.toolbarTitle}>Mosu Editor</h1>
+          <nav className={styles.toolbarNav}>
+            <Link to="/" className={styles.navLink}>
+              首页
+            </Link>
+            <Link to="/editor" className={styles.navLink} activeProps={{ className: styles.navLinkActive }}>
+              编辑器
+            </Link>
+          </nav>
+        </div>
         <div className={styles.toolbarActions}>
           <button type="button" className={styles.toolbarButton} onClick={handleImportClick}>
             导入
