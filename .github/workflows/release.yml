@@ -25,4 +25,4 @@ jobs:
 
       - run: pnpm exec changelogithub # or changelogithub@0.12 to ensure a stable result
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GITHUB_TOKEN: ${{secrets.CHANGELOG_TOKEN}}
