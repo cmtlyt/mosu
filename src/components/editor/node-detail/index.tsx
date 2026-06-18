@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { HistoryNodeData } from '@/types/history';
 import type { AnimationConfig } from '@/types/animation';
-import styles from './node-detail.module.css';
+import styles from './index.module.css';
 
 interface NodeDetailProps {
   data: HistoryNodeData | null;

@@ -25,3 +25,4 @@
 10. logger 的第一个参数是 pointer（模块点分格式），用于唯一标识日志点位，格式为 `'page.module.comp.feature'`，例如 `'editor.ai.chat.stream'`
 11. 必须修复所有类型错误，禁止提交带有 TypeScript 类型错误的代码
 12. CSS 中使用 rem 单位替代 px（1rem = 1px），以下情况可保留 px：`border: 1px` 细线、`box-shadow` 阴影值、`transform` 变换值、根元素 `font-size: 1px` 基准值
+13. 组件必须采用目录形式组织，目录名为组件名（kebab-case），`index.tsx` 作为组件统一导出文件，`index.module.css` 作为组件样式文件放在同一目录下

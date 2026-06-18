@@ -1,7 +1,7 @@
 import { memo, useRef, useEffect } from 'react';
 import type { ChatMessage } from '@/types/history';
-import { ChatMessageItem } from './chat-message';
-import styles from './chat-panel.module.css';
+import { ChatMessageItem } from '../chat-message';
+import styles from '../chat-panel/index.module.css';
 
 interface ChatMessageListProps {
   messages: ChatMessage[];

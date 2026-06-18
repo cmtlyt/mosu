@@ -1,7 +1,7 @@
 import { memo, useState, type KeyboardEvent } from 'react';
-import type { ToggleGroupRef } from './toggle-group';
-import { ToggleGroup } from './toggle-group';
-import styles from './chat-panel.module.css';
+import type { ToggleGroupRef } from '../toggle-group';
+import { ToggleGroup } from '../toggle-group';
+import styles from '../chat-panel/index.module.css';
 
 interface InputAreaProps {
   isStreaming: boolean;

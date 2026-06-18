@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { onEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
-import styles from './message-toast.module.css';
+import styles from './index.module.css';
 
 interface MessageItem {
   id: number;

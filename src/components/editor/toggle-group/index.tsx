@@ -1,5 +1,5 @@
 import { forwardRef, memo, useImperativeHandle, useState } from 'react';
-import styles from './toggle-group.module.css';
+import styles from './index.module.css';
 
 export interface ToggleOptions {
   includeFullDom: boolean;

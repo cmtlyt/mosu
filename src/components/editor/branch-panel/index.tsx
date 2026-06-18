@@ -1,8 +1,8 @@
 import type { HistoryTreeSnapshot } from '@cmtlyt/lingshu-toolkit/shared/history-tree';
 import type { HistoryNodeData } from '@/types/history';
-import { BranchSvg } from './branch-svg';
-import { NodeDetail } from './node-detail';
-import styles from './branch-panel.module.css';
+import { BranchSvg } from '../branch-svg';
+import { NodeDetail } from '../node-detail';
+import styles from './index.module.css';
 
 interface BranchPanelProps {
   snapshot: HistoryTreeSnapshot<HistoryNodeData>;

@@ -3,7 +3,7 @@ import type { AnimationConfig } from '@/types/animation';
 import { createParentBridge } from '@/utils/iframe-bridge';
 import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
 import { logger } from '@/libs/logger';
-import styles from './preview-panel.module.css';
+import styles from './index.module.css';
 
 interface PreviewPanelProps {
   config: AnimationConfig;

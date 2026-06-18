@@ -2,7 +2,7 @@ import { useRef, useLayoutEffect, useEffect, useImperativeHandle, forwardRef } f
 import type { AnimationConfig } from '@/types/animation';
 import type { AnimationPlayer } from '@/libs/animation-sdk';
 import { logger } from '@/libs/logger';
-import styles from './preview-canvas.module.css';
+import styles from './index.module.css';
 
 export interface PreviewCanvasHandle {
   getContainer: () => HTMLDivElement | null;

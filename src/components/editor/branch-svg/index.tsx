@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { HistoryTreeSnapshot } from '@cmtlyt/lingshu-toolkit/shared/history-tree';
 import type { HistoryNodeData } from '@/types/history';
-import styles from './branch-svg.module.css';
+import styles from './index.module.css';
 
 interface BranchSvgProps {
   snapshot: HistoryTreeSnapshot<HistoryNodeData>;

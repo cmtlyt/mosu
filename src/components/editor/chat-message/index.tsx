@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ChatMessage } from '@/types/history';
-import styles from './chat-message.module.css';
+import styles from './index.module.css';
 
 interface ChatMessageProps {
   message: ChatMessage;
