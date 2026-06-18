@@ -7,6 +7,28 @@
   background: var(--bg-primary, #fff);
 }
 
+.topBar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12rem;
+}
+
+.editButton {
+  padding: 6rem 16rem;
+  cursor: pointer;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4rem;
+  background: var(--bg-secondary, #f5f5f5);
+  font-size: 14rem;
+  color: var(--text-primary, #333);
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.editButton:hover {
+  background: var(--bg-tertiary, #e8e8e8);
+}
+
 .canvasWrapper {
   flex: 1;
   overflow: auto;

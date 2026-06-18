@@ -9,11 +9,13 @@ export interface AnimationProjectData {
   customStyle: string | null;
 }
 
+const SHARED_QUERY = 'config';
+
 export function encodeConfigToQuery(data: AnimationProjectData): string {
   try {
     const json = JSON.stringify(data);
     const encoded = btoa(encodeURIComponent(json));
-    return `config=${encoded}`;
+    return `${SHARED_QUERY}=${encoded}`;
   } catch (error) {
     logger.error('libs.share-utils.encode', 'Failed to encode animation project data to query', error);
     return '';
@@ -23,7 +25,7 @@ export function encodeConfigToQuery(data: AnimationProjectData): string {
 export function decodeConfigFromQuery(queryString: string): AnimationProjectData | null {
   try {
     const params = new URLSearchParams(queryString);
-    const encoded = params.get('config');
+    const encoded = params.get(SHARED_QUERY);
     if (!encoded) {
       return null;
     }
@@ -46,8 +48,8 @@ export function decodeConfigFromQuery(queryString: string): AnimationProjectData
 /** 解析完成后清除 URL 中的 animation query 参数 */
 export function clearAnimationQuery(): void {
   const url = new URL(globalThis.location.href);
-  if (url.searchParams.has('animation')) {
-    url.searchParams.delete('animation');
+  if (url.searchParams.has(SHARED_QUERY)) {
+    url.searchParams.delete(SHARED_QUERY);
     globalThis.history.replaceState(null, '', url.toString());
     logger.info('libs.share-utils.clearQuery', 'Cleared animation query from URL');
   }

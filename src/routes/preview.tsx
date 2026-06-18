@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { PreviewCanvas, type PreviewCanvasHandle } from '@/components/preview/preview-canvas';
 import { AnimationPlayer } from '@/libs/animation-sdk';
 import { createChildBridge } from '@/utils/iframe-bridge';
-import { decodeConfigFromQuery, type AnimationProjectData } from '@/utils/editor/share-utils';
+import { decodeConfigFromQuery, encodeConfigToQuery, type AnimationProjectData } from '@/utils/editor/share-utils';
 import { logger } from '@/libs/logger';
 import type { AnimationConfig } from '@/types/animation';
 import styles from '@/styles/preview.module.css';
+import toolbarStyles from '@/components/editor/editor-toolbar/index.module.css';
 
 interface UpdateConfigPayload {
   config: AnimationConfig;
@@ -20,6 +21,7 @@ interface UpdateDomPayload {
 const initialProjectData = decodeConfigFromQuery(globalThis.location.search);
 
 function PreviewPage() {
+  const navigate = useNavigate();
   const playerRef = useRef<AnimationPlayer | null>(null);
   const canvasRef = useRef<PreviewCanvasHandle>(null);
   const [projectData, setProjectData] = useState<AnimationProjectData | null>(() => initialProjectData);
@@ -155,12 +157,40 @@ function PreviewPage() {
     }
   };
 
+  const handleGoToEditor = () => {
+    if (!projectData) {
+      return;
+    }
+    const query = encodeConfigToQuery(projectData);
+    navigate({ to: '/editor', search: query });
+  };
+
   if (!config) {
     return <div className={styles.placeholder}>等待编辑器连接...</div>;
   }
 
   return (
     <div className={styles.previewPage}>
+      {isStandaloneMode && (
+        <div className={toolbarStyles.toolbar}>
+          <div className={toolbarStyles.toolbarLeft}>
+            <h1 className={toolbarStyles.toolbarTitle}>Mosu Preview</h1>
+            <nav className={toolbarStyles.toolbarNav}>
+              <Link to="/" className={toolbarStyles.navLink}>
+                首页
+              </Link>
+              <Link to="/editor" className={toolbarStyles.navLink}>
+                编辑器
+              </Link>
+            </nav>
+          </div>
+          <div className={toolbarStyles.toolbarActions}>
+            <button type="button" className={toolbarStyles.toolbarButton} onClick={handleGoToEditor}>
+              在编辑器中打开
+            </button>
+          </div>
+        </div>
+      )}
       <div className={styles.canvasWrapper}>
         <PreviewCanvas
           ref={canvasRef}

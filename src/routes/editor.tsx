@@ -29,6 +29,8 @@ import type { AnimationConfig } from '@/types/animation';
 import type { HistoryNodeData } from '@/types/history';
 import styles from '@/styles/editor.module.css';
 
+const initialProjectData = decodeConfigFromQuery(globalThis.location.search);
+
 function EditorPage() {
   useEffect(() => {
     document.title = 'Mosu Editor';
@@ -37,25 +39,21 @@ function EditorPage() {
     };
   }, []);
 
-  const [animationId] = useState(() => {
-    const projectData = decodeConfigFromQuery(globalThis.location.search);
-    return projectData?.config?.id ?? generateAnimationId();
-  });
+  const [animationId] = useState(() => initialProjectData?.config?.id ?? generateAnimationId());
 
   const [initialNodeData] = useState<HistoryNodeData>(() => {
-    const projectData = decodeConfigFromQuery(globalThis.location.search);
-    if (projectData) {
+    if (initialProjectData) {
       clearAnimationQuery();
     }
-    const config = projectData?.config ?? createInitialConfig(animationId);
+    const config = initialProjectData?.config ?? createInitialConfig(animationId);
     return {
       config,
-      label: projectData ? '导入的配置' : '初始版本',
+      label: initialProjectData ? '导入的配置' : '初始版本',
       source: 'manual',
       timestamp: Date.now(),
       messages: [],
-      customDom: projectData?.customDom ?? DEFAULT_PREVIEW_DOM,
-      customStyle: projectData?.customStyle ?? null,
+      customDom: initialProjectData?.customDom ?? DEFAULT_PREVIEW_DOM,
+      customStyle: initialProjectData?.customStyle ?? null,
     };
   });
 
