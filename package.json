@@ -1,5 +1,6 @@
 {
   "name": "@cmtlyt/mosu",
+  "version": "0.1.0",
   "private": true,
   "files": [
     "dist-npm"
