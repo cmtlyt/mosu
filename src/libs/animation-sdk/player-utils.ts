@@ -1,5 +1,4 @@
 import type { AnimationTrack } from '@/types/animation';
-import { logger } from '@/libs/logger';
 import type { AnimationHandleImpl } from './handle';
 import { AnimationHandleImpl as HandleImpl } from './handle';
 import type { EventEmitter } from './events';
@@ -20,13 +19,11 @@ export function createTrackAnimation(
   missingTargets: Set<string>,
 ): AnimationHandleImpl | null {
   if (!track.keyframes || track.keyframes.length === 0) {
-    logger.warn('libs.animation-sdk.player.apply-track', `Track "${track.id}" has empty keyframes, skipping`);
     emitter.emit('error', { trackId: track.id, error: new Error('Empty keyframes') });
     return null;
   }
 
   if (!track.options || typeof track.options.duration !== 'number' || track.options.duration < 0) {
-    logger.warn('libs.animation-sdk.player.apply-track', `Track "${track.id}" has invalid duration, skipping`);
     emitter.emit('error', { trackId: track.id, error: new Error('Invalid duration') });
     return null;
   }
@@ -34,7 +31,6 @@ export function createTrackAnimation(
   const element = container.querySelector(track.target);
   if (!element) {
     if (!missingTargets.has(track.target)) {
-      logger.warn('libs.animation-sdk.player.apply-track', `Target not found: ${track.target} for track "${track.id}"`);
       emitter.emit('target-missing', { selector: track.target, trackId: track.id });
       missingTargets.add(track.target);
     }
@@ -58,7 +54,6 @@ export function createTrackAnimation(
 
     return new HandleImpl(track.id, track.target, animation);
   } catch (error) {
-    logger.error('libs.animation-sdk.player.apply-track', `Failed to animate track "${track.id}"`, error);
     emitter.emit('error', {
       trackId: track.id,
       error: error instanceof Error ? error : new Error(String(error)),

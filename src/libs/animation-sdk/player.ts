@@ -1,5 +1,4 @@
 import type { AnimationConfig, AnimationTrack } from '@/types/animation';
-import { logger } from '@/libs/logger';
 import { EventEmitter } from './events';
 import type { AnimationHandleImpl } from './handle';
 import type { AnimationHandle, PlayerOptions, PlayerEventMap, EventHandler, Unsubscribe } from './types';
@@ -52,7 +51,6 @@ export class AnimationPlayer {
    */
   public apply(container: HTMLElement, config: AnimationConfig): AnimationHandle[] {
     if (this.destroyed) {
-      logger.warn('libs.animation-sdk.player.apply', 'Player is destroyed, skipping apply');
       return [];
     }
 

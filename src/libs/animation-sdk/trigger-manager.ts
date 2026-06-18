@@ -1,5 +1,4 @@
 import type { AnimationTrack } from '@/types/animation';
-import { logger } from '@/libs/logger';
 import { classifyGroupsByType, computeTotalDelay } from './trigger-resolver';
 import type { ResolvedTriggerGroup } from './trigger-resolver';
 import type { AnimationHandleImpl } from './handle';
@@ -86,7 +85,6 @@ export class TriggerManager {
     };
     container.addEventListener('click', handler);
     this.delegatedHandlers.set('click', handler);
-    logger.debug('libs.animation-sdk.trigger.bind', `Bound click trigger for ${groups.length} group(s)`);
   }
 
   /**
@@ -164,15 +162,6 @@ export class TriggerManager {
     container.addEventListener('mouseout', outHandler);
     this.delegatedHandlers.set('mouseover', overHandler);
     this.delegatedHandlers.set('mouseout', outHandler);
-
-    const counts = [
-      hoverGroups.length > 0 ? `hover(${hoverGroups.length})` : '',
-      mouseenterGroups.length > 0 ? `mouseenter(${mouseenterGroups.length})` : '',
-      mouseleaveGroups.length > 0 ? `mouseleave(${mouseleaveGroups.length})` : '',
-    ]
-      .filter(Boolean)
-      .join(', ');
-    logger.debug('libs.animation-sdk.trigger.bind', `Bound mouse triggers: ${counts}`);
   }
 
   private bindScrollTriggers(container: HTMLElement, groups: ResolvedTriggerGroup[]): void {
@@ -186,7 +175,6 @@ export class TriggerManager {
     };
     container.addEventListener('scroll', handler, { passive: true });
     this.delegatedHandlers.set('scroll', handler);
-    logger.debug('libs.animation-sdk.trigger.bind', `Bound scroll trigger for ${groups.length} group(s)`);
   }
 
   private bindViewportTriggers(container: HTMLElement, groups: ResolvedTriggerGroup[]): void {
@@ -194,10 +182,6 @@ export class TriggerManager {
       const element = container.querySelector(group.def.target);
       if (!element) {
         for (const track of group.tracks) {
-          logger.warn(
-            'libs.animation-sdk.trigger.bind',
-            `Trigger target not found: ${group.def.target} for track "${track.id}"`,
-          );
           this.emitter.emit('target-missing', { selector: group.def.target, trackId: track.id });
         }
         continue;
@@ -214,7 +198,6 @@ export class TriggerManager {
       );
       observer.observe(element);
       this.intersectionObservers.push(observer);
-      logger.debug('libs.animation-sdk.trigger.bind', 'Bound viewport trigger for group');
     }
   }
 
@@ -246,7 +229,6 @@ export class TriggerManager {
           handle.play();
           this.firedTrackIds.add(track.id);
           this.emitter.emit('trigger-fired', { trackId: track.id, type: group.def.type });
-          logger.debug('libs.animation-sdk.trigger.fired', `Track "${track.id}" triggered by ${group.def.type}`);
         }
       };
 
