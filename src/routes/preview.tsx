@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { PreviewCanvas, type PreviewCanvasHandle } from '@/components/preview/preview-canvas';
 import { AnimationPlayer } from '@/libs/animation-sdk';
 import { createChildBridge } from '@/utils/iframe-bridge';
+import { decodeConfigFromQuery, type AnimationProjectData } from '@/utils/editor/share-utils';
 import { logger } from '@/libs/logger';
 import type { AnimationConfig } from '@/types/animation';
 import styles from '@/styles/preview.module.css';
@@ -16,20 +17,34 @@ interface UpdateDomPayload {
   customStyle: string | null;
 }
 
+const initialProjectData = decodeConfigFromQuery(globalThis.location.search);
+
 function PreviewPage() {
   const playerRef = useRef<AnimationPlayer | null>(null);
   const canvasRef = useRef<PreviewCanvasHandle>(null);
-  const [config, setConfig] = useState<AnimationConfig | null>(null);
-  const [customDom, setCustomDom] = useState<string | null>(null);
-  const [customStyle, setCustomStyle] = useState<string | null>(null);
+  const [projectData, setProjectData] = useState<AnimationProjectData | null>(() => initialProjectData);
   const [progressMs, setProgressMs] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const isDraggingRef = useRef(false);
+  const isStandaloneMode = Boolean(initialProjectData);
+
+  const config = projectData?.config ?? null;
+  const customDom = projectData?.customDom ?? null;
+  const customStyle = projectData?.customStyle ?? null;
 
   useEffect(() => {
     const player = new AnimationPlayer({ autoPlay: true });
     playerRef.current = player;
+
+    // 独立模式下不建立 bridge 连接
+    if (isStandaloneMode) {
+      logger.info('routes.preview.standalone-init', 'Preview page initialized in standalone mode');
+      return () => {
+        player.destroy();
+        playerRef.current = null;
+      };
+    }
 
     const bridge = createChildBridge();
 
@@ -49,12 +64,24 @@ function PreviewPage() {
     });
 
     const unsubConfig = bridge.on<UpdateConfigPayload>('preview', 'update-config', (payload) => {
-      setConfig(payload.config);
+      setProjectData((prev) => ({
+        config: payload.config,
+        customDom: prev?.customDom ?? null,
+        customStyle: prev?.customStyle ?? null,
+      }));
     });
 
     const unsubDom = bridge.on<UpdateDomPayload>('preview', 'update-dom', (payload) => {
-      setCustomDom(payload.customDom);
-      setCustomStyle(payload.customStyle);
+      setProjectData((prev) => {
+        if (!prev) {
+          return null;
+        }
+        return {
+          ...prev,
+          customDom: payload.customDom,
+          customStyle: payload.customStyle,
+        };
+      });
     });
 
     bridge.emit('preview', 'ready');
@@ -69,7 +96,7 @@ function PreviewPage() {
       player.destroy();
       playerRef.current = null;
     };
-  }, []);
+  }, [isStandaloneMode]);
 
   const handleReplay = () => {
     const container = canvasRef.current?.getContainer();

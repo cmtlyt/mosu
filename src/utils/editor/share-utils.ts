@@ -13,7 +13,7 @@ export function encodeConfigToQuery(data: AnimationProjectData): string {
   try {
     const json = JSON.stringify(data);
     const encoded = btoa(encodeURIComponent(json));
-    return `animation=${encoded}`;
+    return `config=${encoded}`;
   } catch (error) {
     logger.error('libs.share-utils.encode', 'Failed to encode animation project data to query', error);
     return '';
@@ -23,7 +23,7 @@ export function encodeConfigToQuery(data: AnimationProjectData): string {
 export function decodeConfigFromQuery(queryString: string): AnimationProjectData | null {
   try {
     const params = new URLSearchParams(queryString);
-    const encoded = params.get('animation');
+    const encoded = params.get('config');
     if (!encoded) {
       return null;
     }
