@@ -12,6 +12,7 @@ export interface SendMessageOptions {
   domContent?: string;
   isFullDom?: boolean;
   includeCss?: boolean;
+  includeAnimationConfig?: boolean;
   currentStyle?: string | null;
 }
 
@@ -57,6 +58,36 @@ function parseAIResponse(raw: string): AIEditorResponse | null {
   return null;
 }
 
+function buildSystemDirectives(options?: SendMessageOptions): ChatCompletionMessageParam[] {
+  const directives: ChatCompletionMessageParam[] = [];
+
+  if (options?.includeCss) {
+    directives.push({ role: 'user', content: '[系统指令] 已启用 CSS 携带模式' });
+  }
+
+  if (options?.includeAnimationConfig === false) {
+    directives.push({ role: 'user', content: '[系统指令] 未启用动画配置携带模式' });
+  }
+
+  return directives;
+}
+
+function buildUserContent(content: string, currentConfig: AnimationConfig, options?: SendMessageOptions): string {
+  const configInfo =
+    options?.includeAnimationConfig === false ? '' : `\n当前动画配置：\n${JSON.stringify(currentConfig, null, 2)}`;
+
+  const domInfo = options?.domContent
+    ? options.isFullDom
+      ? `\n\n当前预览区域的完整 DOM：\n${options.domContent}`
+      : `\n\n当前预览区域的 DOM 结构摘要：\n${options.domContent}`
+    : '';
+
+  const cssInfo =
+    options?.includeCss && options.currentStyle ? `\n\n当前预览区域的 CSS 样式：\n${options.currentStyle}` : '';
+
+  return `${configInfo}${domInfo}${cssInfo}\n\n用户需求：${content}`;
+}
+
 export function useAIChat(): UseAIChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -90,31 +121,12 @@ export function useAIChat(): UseAIChatReturn {
       dispatchEditorEvent(EDITOR_EVENTS.AI_STREAM_START);
 
       try {
-        const chatMessages: ChatCompletionMessageParam[] = [{ role: 'system', content: SYSTEM_PROMPT }];
+        const chatMessages: ChatCompletionMessageParam[] = [
+          { role: 'system', content: SYSTEM_PROMPT },
+          ...buildSystemDirectives(options),
+        ];
 
-        // 如果启用 CSS 携带模式，追加独立的 user prompt 激活
-        if (options?.includeCss) {
-          chatMessages.push({
-            role: 'user',
-            content: '[系统指令] 已启用 CSS 携带模式，请按照 system prompt 中的"CSS 携带模式规则"返回全量 CSS。',
-          });
-        }
-
-        // 构建 DOM 信息
-        const domInfo = options?.domContent
-          ? options.isFullDom
-            ? `\n\n当前预览区域的完整 DOM：\n${options.domContent}`
-            : `\n\n当前预览区域的 DOM 结构摘要：\n${options.domContent}`
-          : '';
-
-        // 构建 CSS 信息
-        const cssInfo =
-          options?.includeCss && options.currentStyle ? `\n\n当前预览区域的 CSS 样式：\n${options.currentStyle}` : '';
-
-        chatMessages.push({
-          role: 'user',
-          content: `当前动画配置：\n${JSON.stringify(currentConfig, null, 2)}${domInfo}${cssInfo}\n\n用户需求：${content}`,
-        });
+        chatMessages.push({ role: 'user', content: buildUserContent(content, currentConfig, options) });
 
         const fullResponse = await streamChat(chatMessages, (chunk) => {
           setMessages((prev) =>

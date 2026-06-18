@@ -1,0 +1,47 @@
+.options {
+  display: flex;
+  gap: 6rem;
+}
+
+.toggle {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggleInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.toggleIcon {
+  width: 28rem;
+  height: 28rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6rem;
+  color: #94a3b8;
+  background: transparent;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.toggleIcon:hover {
+  background: #f1f5f9;
+}
+
+.toggleInput:checked + .toggleIcon {
+  background: #dbeafe;
+  color: #4f86f7;
+}
+
+.toggleInput:checked + .toggleIcon:hover {
+  background: #bfdbfe;
+}

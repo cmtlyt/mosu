@@ -56,4 +56,7 @@ html 禁止 <script> 和事件属性。selector 基于 DOM 摘要中的 class/id
 - type 为 "auto" 的轨道无需配置 trigger 和 triggerGroup，直接省略即可，auto 轨道会在 apply 时自动播放
 
 ## CSS 携带模式规则
-当用户启用"携带 CSS 样式"模式时（通过独立的 user prompt 标识），你返回的 style 字段将**替换**（而非追加到）现有样式。因此你**必须返回全量 CSS**，包含所有需要保留的样式规则，不能仅输出增量变更。`;
+当收到"[系统指令] 已启用 CSS 携带模式"时，返回的 style 字段将**替换**（而非追加到）现有样式。因此你**必须返回全量 CSS**，包含所有需要保留的样式规则，不能仅输出增量变更。
+
+## 动画配置携带模式规则
+当收到"[系统指令] 未启用动画配置携带模式"时，**禁止**返回 config 和 animationPatch 字段，仅允许返回 name、domPatch、style。`;

@@ -118,6 +118,7 @@ function EditorPage() {
         domContent,
         isFullDom: options.includeFullDom,
         includeCss: options.includeCss,
+        includeAnimationConfig: options.includeAnimationConfig,
         currentStyle,
       });
 

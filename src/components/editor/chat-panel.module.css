@@ -76,27 +76,6 @@
   border-top: 1px solid #f1f5f9;
 }
 
-.options {
-  display: flex;
-  gap: 12rem;
-  font-size: 12rem;
-  color: #64748b;
-}
-
-.toggle {
-  display: flex;
-  align-items: center;
-  gap: 3rem;
-  cursor: pointer;
-  user-select: none;
-}
-
-.toggle input[type='checkbox'] {
-  accent-color: #4f86f7;
-  width: 13rem;
-  height: 13rem;
-}
-
 .sendButton {
   width: 28rem;
   height: 28rem;
