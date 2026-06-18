@@ -22,15 +22,12 @@ export function encodeConfigToQuery(data: AnimationProjectData): string {
   }
 }
 
-export function decodeConfigFromQuery(queryString: string): AnimationProjectData | null {
+export function decodeConfigFromQuery(config?: string): AnimationProjectData | null {
+  if (!config) {
+    return null;
+  }
   try {
-    const params = new URLSearchParams(queryString);
-    const encoded = params.get(SHARED_QUERY);
-    if (!encoded) {
-      return null;
-    }
-
-    const json = decodeURIComponent(atob(encoded));
+    const json = decodeURIComponent(atob(config));
     const data = JSON.parse(json) as AnimationProjectData;
 
     if (!data.config?.version || !data.config?.id || !data.config?.tracks) {
@@ -42,16 +39,6 @@ export function decodeConfigFromQuery(queryString: string): AnimationProjectData
   } catch (error) {
     logger.warn('libs.share-utils.decode', 'Failed to decode animation project data from query', error);
     return null;
-  }
-}
-
-/** 解析完成后清除 URL 中的 animation query 参数 */
-export function clearAnimationQuery(): void {
-  const url = new URL(globalThis.location.href);
-  if (url.searchParams.has(SHARED_QUERY)) {
-    url.searchParams.delete(SHARED_QUERY);
-    globalThis.history.replaceState(null, '', url.toString());
-    logger.info('libs.share-utils.clearQuery', 'Cleared animation query from URL');
   }
 }
 

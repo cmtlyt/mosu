@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, getRouteApi, useNavigate } from '@tanstack/react-router';
 import { useHistoryTree } from '@/hooks/use-history-tree';
 import { useAIChat } from '@/hooks/use-ai-chat';
 import { useModelLoader } from '@/hooks/use-model-loader';
@@ -11,7 +11,7 @@ import { BranchPanel } from '@/components/editor/branch-panel';
 import { MessageToast } from '@/components/editor/message-toast';
 import { EditorToolbar } from '@/components/editor/editor-toolbar';
 import { createInitialConfig, DEFAULT_PREVIEW_DOM } from '@/constants/templates';
-import { decodeConfigFromQuery, clearAnimationQuery } from '@/utils/editor/share-utils';
+import { decodeConfigFromQuery } from '@/utils/editor/share-utils';
 import { dispatchEditorEvent, EDITOR_EVENTS, onEditorEvent } from '@/utils/editor/event-bus';
 import { logger } from '@/libs/logger';
 import { generateDomSummary } from '@/utils/editor/dom-summary';
@@ -29,22 +29,28 @@ import type { AnimationConfig } from '@/types/animation';
 import type { HistoryNodeData } from '@/types/history';
 import styles from '@/styles/editor.module.css';
 
-const initialProjectData = decodeConfigFromQuery(globalThis.location.search);
+const routeApi = getRouteApi('/editor');
 
 function EditorPage() {
+  const navigate = useNavigate();
+  const { config: queryConfig } = routeApi.useSearch();
+  const [initialProjectData] = useState(() => decodeConfigFromQuery(queryConfig));
+
+  useEffect(() => {
+    if (queryConfig) {
+      navigate({ to: '/editor', search: {}, replace: true });
+    }
+  }, [navigate, queryConfig]);
+
   useEffect(() => {
     document.title = 'Mosu Editor';
     return () => {
       document.title = 'Mosu';
     };
   }, []);
-
   const [animationId] = useState(() => initialProjectData?.config?.id ?? generateAnimationId());
 
   const [initialNodeData] = useState<HistoryNodeData>(() => {
-    if (initialProjectData) {
-      clearAnimationQuery();
-    }
     const config = initialProjectData?.config ?? createInitialConfig(animationId);
     return {
       config,
@@ -246,5 +252,8 @@ function EditorPage() {
 }
 
 export const Route = createFileRoute('/editor')({
+  validateSearch(search) {
+    return { config: search.config } as { config?: string };
+  },
   component: EditorPage,
 });

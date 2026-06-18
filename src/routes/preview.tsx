@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, getRouteApi, Link, useNavigate } from '@tanstack/react-router';
 import { PreviewCanvas, type PreviewCanvasHandle } from '@/components/preview/preview-canvas';
 import { AnimationPlayer } from '@/libs/animation-sdk';
 import { createChildBridge } from '@/utils/iframe-bridge';
-import { decodeConfigFromQuery, encodeConfigToQuery, type AnimationProjectData } from '@/utils/editor/share-utils';
+import { decodeConfigFromQuery, type AnimationProjectData } from '@/utils/editor/share-utils';
 import { logger } from '@/libs/logger';
 import type { AnimationConfig } from '@/types/animation';
 import styles from '@/styles/preview.module.css';
@@ -18,18 +18,19 @@ interface UpdateDomPayload {
   customStyle: string | null;
 }
 
-const initialProjectData = decodeConfigFromQuery(globalThis.location.search);
+const routeApi = getRouteApi('/preview');
 
 function PreviewPage() {
+  const { config: queryConfig } = routeApi.useSearch();
   const navigate = useNavigate();
   const playerRef = useRef<AnimationPlayer | null>(null);
   const canvasRef = useRef<PreviewCanvasHandle>(null);
-  const [projectData, setProjectData] = useState<AnimationProjectData | null>(() => initialProjectData);
+  const [projectData, setProjectData] = useState<AnimationProjectData | null>(() => decodeConfigFromQuery(queryConfig));
   const [progressMs, setProgressMs] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const isDraggingRef = useRef(false);
-  const isStandaloneMode = Boolean(initialProjectData);
+  const isStandaloneMode = Boolean(queryConfig);
 
   const config = projectData?.config ?? null;
   const customDom = projectData?.customDom ?? null;
@@ -158,11 +159,10 @@ function PreviewPage() {
   };
 
   const handleGoToEditor = () => {
-    if (!projectData) {
+    if (!queryConfig) {
       return;
     }
-    const query = encodeConfigToQuery(projectData);
-    navigate({ to: '/editor', search: query });
+    navigate({ to: '/editor', search: { config: queryConfig } });
   };
 
   if (!config) {
@@ -261,5 +261,8 @@ function PreviewPage() {
 }
 
 export const Route = createFileRoute('/preview')({
+  validateSearch(search) {
+    return { config: search.config as string };
+  },
   component: PreviewPage,
 });

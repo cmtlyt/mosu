@@ -81,7 +81,7 @@ export function PreviewPanel({ config, customDom, customStyle }: PreviewPanelPro
     setIframeError(false);
     isReadyRef.current = false;
     if (iframeRef.current) {
-      iframeRef.current.src = `${import.meta.env.BASE_URL}preview`;
+      iframeRef.current.src = '#/preview';
     }
   }, []);
 
@@ -112,7 +112,7 @@ export function PreviewPanel({ config, customDom, customStyle }: PreviewPanelPro
       <div className={styles.canvasWrapper}>
         <iframe
           ref={iframeRef}
-          src={`${import.meta.env.BASE_URL}preview`}
+          src="#/preview"
           className={styles.iframe}
           title="动画预览"
           sandbox="allow-scripts allow-same-origin"

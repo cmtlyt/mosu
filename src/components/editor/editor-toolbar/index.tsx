@@ -59,7 +59,7 @@ export function EditorToolbar({ currentConfig, currentDom, currentStyle, onImpor
       dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '生成分享链接失败', type: 'error' });
       return;
     }
-    const shareUrl = `${globalThis.location.origin}${import.meta.env.BASE_URL}preview?${query}`;
+    const shareUrl = `${globalThis.location.origin}${import.meta.env.BASE_URL}#/preview?${query}`;
     navigator.clipboard.writeText(shareUrl).then(
       () => {
         logger.info('editor.toolbar.share', 'Share URL copied to clipboard');
