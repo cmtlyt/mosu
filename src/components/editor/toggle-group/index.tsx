@@ -5,6 +5,7 @@ export interface ToggleOptions {
   includeFullDom: boolean;
   includeCss: boolean;
   includeAnimationConfig: boolean;
+  includeFullContext: boolean;
 }
 
 export interface ToggleGroupRef {
@@ -13,12 +14,15 @@ export interface ToggleGroupRef {
 
 export const ToggleGroup = memo(
   forwardRef<ToggleGroupRef>((_, ref) => {
-    const [includeFullDom, setIncludeFullDom] = useState(false);
-    const [includeCss, setIncludeCss] = useState(false);
-    const [includeAnimationConfig, setIncludeAnimationConfig] = useState(true);
+    const [toggleState, setToggleState] = useState({
+      includeFullDom: false,
+      includeCss: false,
+      includeAnimationConfig: true,
+      includeFullContext: false,
+    });
 
     useImperativeHandle(ref, () => ({
-      getOptions: () => ({ includeFullDom, includeCss, includeAnimationConfig }),
+      getOptions: () => toggleState,
     }));
 
     return (
@@ -27,8 +31,8 @@ export const ToggleGroup = memo(
           <input
             type="checkbox"
             className={styles.toggleInput}
-            checked={includeAnimationConfig}
-            onChange={(e) => setIncludeAnimationConfig(e.target.checked)}
+            checked={toggleState.includeAnimationConfig}
+            onChange={(e) => setToggleState((prev) => ({ ...prev, includeAnimationConfig: e.target.checked }))}
             aria-label="携带动画配置"
           />
           <span className={styles.toggleIcon}>
@@ -48,8 +52,8 @@ export const ToggleGroup = memo(
           <input
             type="checkbox"
             className={styles.toggleInput}
-            checked={includeFullDom}
-            onChange={(e) => setIncludeFullDom(e.target.checked)}
+            checked={toggleState.includeFullDom}
+            onChange={(e) => setToggleState((prev) => ({ ...prev, includeFullDom: e.target.checked }))}
             aria-label="携带全量 DOM"
           />
           <span className={styles.toggleIcon}>
@@ -76,8 +80,8 @@ export const ToggleGroup = memo(
           <input
             type="checkbox"
             className={styles.toggleInput}
-            checked={includeCss}
-            onChange={(e) => setIncludeCss(e.target.checked)}
+            checked={toggleState.includeCss}
+            onChange={(e) => setToggleState((prev) => ({ ...prev, includeCss: e.target.checked }))}
             aria-label="携带 CSS 样式"
           />
           <span className={styles.toggleIcon}>
@@ -96,6 +100,23 @@ export const ToggleGroup = memo(
               <circle cx="8" cy="5" r="1" fill="currentColor" />
               <circle cx="11" cy="6" r="1" fill="currentColor" />
               <circle cx="7" cy="9" r="1" fill="currentColor" />
+            </svg>
+          </span>
+        </label>
+        <label className={styles.toggle} title="携带全量上下文">
+          <input
+            type="checkbox"
+            className={styles.toggleInput}
+            checked={toggleState.includeFullContext}
+            onChange={(e) => setToggleState((prev) => ({ ...prev, includeFullContext: e.target.checked }))}
+            aria-label="携带全量上下文"
+          />
+          <span className={styles.toggleIcon}>
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 3V13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M6 4H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M6 8H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M6 12H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </span>
         </label>

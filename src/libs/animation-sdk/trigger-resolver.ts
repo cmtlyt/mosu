@@ -73,15 +73,11 @@ export function classifyGroupsByType(resolvedGroups: Map<string, ResolvedTrigger
   hoverGroups: ResolvedTriggerGroup[];
   mouseenterGroups: ResolvedTriggerGroup[];
   mouseleaveGroups: ResolvedTriggerGroup[];
-  scrollGroups: ResolvedTriggerGroup[];
-  viewportGroups: ResolvedTriggerGroup[];
 } {
   const clickGroups: ResolvedTriggerGroup[] = [];
   const hoverGroups: ResolvedTriggerGroup[] = [];
   const mouseenterGroups: ResolvedTriggerGroup[] = [];
   const mouseleaveGroups: ResolvedTriggerGroup[] = [];
-  const scrollGroups: ResolvedTriggerGroup[] = [];
-  const viewportGroups: ResolvedTriggerGroup[] = [];
 
   for (const group of resolvedGroups.values()) {
     switch (group.def.type) {
@@ -97,18 +93,12 @@ export function classifyGroupsByType(resolvedGroups: Map<string, ResolvedTrigger
       case 'mouseleave':
         mouseleaveGroups.push(group);
         break;
-      case 'scroll':
-        scrollGroups.push(group);
-        break;
-      case 'viewport':
-        viewportGroups.push(group);
-        break;
       default:
         break;
     }
   }
 
-  return { clickGroups, hoverGroups, mouseenterGroups, mouseleaveGroups, scrollGroups, viewportGroups };
+  return { clickGroups, hoverGroups, mouseenterGroups, mouseleaveGroups };
 }
 
 /**

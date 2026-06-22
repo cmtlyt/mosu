@@ -10,6 +10,7 @@ export interface SendMessageOptions {
   includeFullDom: boolean;
   includeCss: boolean;
   includeAnimationConfig: boolean;
+  includeFullContext: boolean;
 }
 
 interface ChatPanelProps {
@@ -27,6 +28,7 @@ export function ChatPanel({ messages, isStreaming, onSendMessage }: ChatPanelPro
       includeFullDom: false,
       includeCss: false,
       includeAnimationConfig: true,
+      includeFullContext: false,
     };
     onSendMessage(content, options);
   };

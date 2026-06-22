@@ -4,6 +4,7 @@
  */
 import { AnimationPlayer } from '@/libs/animation-sdk';
 import type { AnimationConfig } from '@/types/animation';
+import { logger } from '@/libs/logger';
 
 export interface AnimationControl {
   play: () => void;
@@ -12,7 +13,7 @@ export interface AnimationControl {
 }
 
 export function applyAnimation(container: HTMLElement, config: AnimationConfig): AnimationControl[] {
-  const player = new AnimationPlayer({ autoPlay: false });
+  const player = new AnimationPlayer({ autoPlay: false, logger });
   const handles = player.apply(container, config);
   return handles.map((handle) => ({
     play: () => handle.play(),

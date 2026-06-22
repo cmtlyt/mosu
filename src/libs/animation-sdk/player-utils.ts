@@ -2,46 +2,19 @@ import type { AnimationTrack } from '@/types/animation';
 import type { AnimationHandleImpl } from './handle';
 import { AnimationHandleImpl as HandleImpl } from './handle';
 import type { EventEmitter } from './events';
+import type { AnimationLogger } from './types';
 
 /**
- * 创建单个轨道的 WAAPI 动画
- *
- * @param container DOM 容器
- * @param track 动画轨道配置
- * @param emitter 事件发射器
- * @param missingTargets 已报告过的缺失目标集合（避免重复日志）
- * @returns 动画句柄，失败返回 null
+ * 为单个元素创建 WAAPI 动画
  */
-export function createTrackAnimation(
-  container: HTMLElement,
+function createSingleElementAnimation(
+  element: Element,
+  trackId: string,
   track: AnimationTrack,
+  keyframesArray: Keyframe[],
   emitter: EventEmitter,
-  missingTargets: Set<string>,
+  logger?: AnimationLogger,
 ): AnimationHandleImpl | null {
-  if (!track.keyframes || track.keyframes.length === 0) {
-    emitter.emit('error', { trackId: track.id, error: new Error('Empty keyframes') });
-    return null;
-  }
-
-  if (!track.options || typeof track.options.duration !== 'number' || track.options.duration < 0) {
-    emitter.emit('error', { trackId: track.id, error: new Error('Invalid duration') });
-    return null;
-  }
-
-  const element = container.querySelector(track.target);
-  if (!element) {
-    if (!missingTargets.has(track.target)) {
-      emitter.emit('target-missing', { selector: track.target, trackId: track.id });
-      missingTargets.add(track.target);
-    }
-    return null;
-  }
-
-  const keyframesArray = track.keyframes.map((keyframe) => {
-    const { offset, ...properties } = keyframe;
-    return { offset, ...properties } as Keyframe;
-  });
-
   try {
     const animation = (element as HTMLElement).animate(keyframesArray, {
       duration: track.options.duration,
@@ -52,14 +25,77 @@ export function createTrackAnimation(
       fill: track.options.fillMode ?? 'none',
     });
 
-    return new HandleImpl(track.id, track.target, animation);
+    logger?.debug('sdk.animation.track.created', `Track "${trackId}" created for target "${track.target}"`, {
+      duration: track.options.duration,
+      easing: track.options.easing,
+      iterations: track.options.iterations,
+    });
+
+    return new HandleImpl(trackId, track.target, animation);
   } catch (error) {
+    logger?.error('sdk.animation.track.error', `Failed to create animation for track "${trackId}"`, error);
     emitter.emit('error', {
-      trackId: track.id,
+      trackId: trackId,
       error: error instanceof Error ? error : new Error(String(error)),
     });
     return null;
   }
+}
+
+/**
+ * 创建单个轨道的 WAAPI 动画（支持多元素）
+ *
+ * @param container DOM 容器
+ * @param track 动画轨道配置
+ * @param emitter 事件发射器
+ * @param missingTargets 已报告过的缺失目标集合（避免重复日志）
+ * @param logger 可选的 logger 实例
+ * @returns 动画句柄数组，失败返回空数组
+ */
+export function createTrackAnimation(
+  container: HTMLElement,
+  track: AnimationTrack,
+  emitter: EventEmitter,
+  missingTargets: Set<string>,
+  logger?: AnimationLogger,
+): AnimationHandleImpl[] {
+  if (!track.keyframes || track.keyframes.length === 0) {
+    emitter.emit('error', { trackId: track.id, error: new Error('Empty keyframes') });
+    return [];
+  }
+
+  if (!track.options || typeof track.options.duration !== 'number' || track.options.duration < 0) {
+    emitter.emit('error', { trackId: track.id, error: new Error('Invalid duration') });
+    return [];
+  }
+
+  const elements = Array.from(container.querySelectorAll(track.target));
+  if (elements.length === 0) {
+    logger?.warn('sdk.animation.track.missing', `Target "${track.target}" not found for track "${track.id}"`);
+    if (!missingTargets.has(track.target)) {
+      emitter.emit('target-missing', { selector: track.target, trackId: track.id });
+      missingTargets.add(track.target);
+    }
+    return [];
+  }
+
+  const keyframesArray = track.keyframes.map((keyframe) => {
+    const { offset, ...properties } = keyframe;
+    return { offset, ...properties } as Keyframe;
+  });
+
+  const handles: AnimationHandleImpl[] = [];
+
+  for (let index = 0; index < elements.length; index++) {
+    const element = elements[index];
+    const trackId = elements.length > 1 ? `${track.id}-${index}` : track.id;
+    const handle = createSingleElementAnimation(element, trackId, track, keyframesArray, emitter, logger);
+    if (handle) {
+      handles.push(handle);
+    }
+  }
+
+  return handles;
 }
 
 /**

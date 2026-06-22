@@ -1,10 +1,29 @@
 import type { AnimationConfig, AnimationTrack } from '@/types/animation';
 import { EventEmitter } from './events';
 import type { AnimationHandleImpl } from './handle';
-import type { AnimationHandle, PlayerOptions, PlayerEventMap, EventHandler, Unsubscribe } from './types';
+import type {
+  AnimationHandle,
+  AnimationLogger,
+  PlayerOptions,
+  PlayerEventMap,
+  EventHandler,
+  Unsubscribe,
+} from './types';
 import { resolveTriggerGroups, resolveTrackGroupId } from './trigger-resolver';
 import { TriggerManager } from './trigger-manager';
 import { createTrackAnimation, trackAllCompletion, observeContainer, startProgressTracking } from './player-utils';
+
+/** 空操作 logger，当未传入 logger 时使用 */
+const noopLogger: AnimationLogger = {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  info: () => {},
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  warn: () => {},
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  error: () => {},
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  debug: () => {},
+};
 
 /**
  * 框架无关的动画播放器
@@ -13,7 +32,8 @@ import { createTrackAnimation, trackAllCompletion, observeContainer, startProgre
  * 不依赖任何 UI 框架，可单独打包移植。
  */
 export class AnimationPlayer {
-  private options: Required<PlayerOptions>;
+  private options: Required<Omit<PlayerOptions, 'logger'>>;
+  private logger: AnimationLogger;
   private emitter = new EventEmitter();
   private handles: AnimationHandleImpl[] = [];
   private observers = new Map<HTMLElement, MutationObserver>();
@@ -29,15 +49,17 @@ export class AnimationPlayer {
       autoPlay: options?.autoPlay ?? true,
       playbackRate: options?.playbackRate ?? 1,
     };
+    this.logger = options?.logger ?? noopLogger;
     this.triggerManager = new TriggerManager(
       this.emitter,
       (container, track) => this.applyTrack(container, track),
       () => this.destroyed,
+      this.logger,
     );
   }
 
-  private applyTrack(container: HTMLElement, track: AnimationTrack): AnimationHandleImpl | null {
-    return createTrackAnimation(container, track, this.emitter, this.missingTargets);
+  private applyTrack(container: HTMLElement, track: AnimationTrack): AnimationHandleImpl[] {
+    return createTrackAnimation(container, track, this.emitter, this.missingTargets, this.logger);
   }
 
   /** 是否正在播放（从 handles 实时推导） */
@@ -54,6 +76,11 @@ export class AnimationPlayer {
       return [];
     }
 
+    this.logger.info(
+      'sdk.animation.apply',
+      `Applying config: ${config.tracks.length} tracks, ${Object.keys(config.triggerGroups ?? {}).length} trigger groups`,
+    );
+
     // 先清理旧动画和旧触发器
     this.removeAll();
     this.triggerManager.cleanup();
@@ -68,14 +95,14 @@ export class AnimationPlayer {
       // 检查轨道是否属于某个触发器分组
       const groupId = resolveTrackGroupId(track);
       if (groupId && resolvedGroups.has(groupId)) {
-        // 事件触发型轨道：不立即创建动画
+        this.logger.debug('sdk.animation.apply', `Track "${track.id}" deferred to trigger group "${groupId}"`);
         continue;
       }
 
       // 自动播放型轨道：立即创建动画
-      const handle = this.applyTrack(container, track);
-      if (handle) {
-        autoPlayHandles.push(handle);
+      const handles = this.applyTrack(container, track);
+      if (handles.length > 0) {
+        autoPlayHandles.push(...handles);
       }
     }
 
@@ -87,6 +114,7 @@ export class AnimationPlayer {
 
     // 自动播放
     if (this.options.autoPlay && this.handles.length > 0) {
+      this.logger.debug('sdk.animation.apply', `Auto-playing ${this.handles.length} tracks`);
       this.playAll();
     }
 
@@ -222,6 +250,7 @@ export class AnimationPlayer {
     if (this.destroyed) {
       return;
     }
+    this.logger.info('sdk.animation.destroy', 'Destroying animation player');
     this.removeAll();
     this.triggerManager.cleanup();
     this.disconnectObservers();

@@ -13,7 +13,7 @@ export interface AnimationTrackOptions {
 }
 
 /** 事件触发器类型 */
-export type AnimationTriggerType = 'auto' | 'click' | 'hover' | 'mouseenter' | 'mouseleave' | 'scroll' | 'viewport';
+export type AnimationTriggerType = 'auto' | 'click' | 'hover' | 'mouseenter' | 'mouseleave';
 
 /** 触发器分组定义（与 tracks 同级，key 为分组 ID） */
 export interface AnimationTriggerGroup {

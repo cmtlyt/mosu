@@ -1,5 +1,13 @@
 import type { AnimationConfig } from '@/types/animation';
 
+/** Animation SDK 使用的 Logger 接口（兼容 @cmtlyt/logger） */
+export interface AnimationLogger {
+  info(pointer: string, message: string, ...otherMessage: unknown[]): void;
+  warn(pointer: string, message: string, ...otherMessage: unknown[]): void;
+  error(pointer: string, message: string, error: unknown, ...otherMessage: unknown[]): void;
+  debug(pointer: string, message: string, ...otherMessage: unknown[]): void;
+}
+
 /** 单个动画轨道的控制句柄 */
 export interface AnimationHandle {
   /** 动画轨道 ID */
@@ -44,6 +52,8 @@ export interface PlayerOptions {
   autoPlay?: boolean;
   /** 全局速度倍率，默认 1 */
   playbackRate?: number;
+  /** 可选的 Logger 实例，用于打印 SDK 内部日志 */
+  logger?: AnimationLogger;
 }
 
 /** 事件处理器 */

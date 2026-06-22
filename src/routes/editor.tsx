@@ -126,6 +126,8 @@ function EditorPage() {
         includeCss: options.includeCss,
         includeAnimationConfig: options.includeAnimationConfig,
         currentStyle,
+        includeFullContext: options.includeFullContext,
+        conversationHistory,
       });
 
       if (!result.response) {
@@ -155,7 +157,17 @@ function EditorPage() {
       dispatchEditorEvent(EDITOR_EVENTS.CONFIG_COMMITTED);
       dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '动画配置已更新', type: 'success' });
     },
-    [currentConfig, sendMessage, commitAndSelect, isLoaded, modelError, messages, currentDom, currentStyle],
+    [
+      currentConfig,
+      sendMessage,
+      commitAndSelect,
+      isLoaded,
+      modelError,
+      messages,
+      currentDom,
+      currentStyle,
+      conversationHistory,
+    ],
   );
 
   const handleCustomChange = useCallback(

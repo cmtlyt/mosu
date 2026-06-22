@@ -37,7 +37,7 @@ function PreviewPage() {
   const customStyle = projectData?.customStyle ?? null;
 
   useEffect(() => {
-    const player = new AnimationPlayer({ autoPlay: true });
+    const player = new AnimationPlayer({ autoPlay: true, logger });
     playerRef.current = player;
 
     // 独立模式下不建立 bridge 连接

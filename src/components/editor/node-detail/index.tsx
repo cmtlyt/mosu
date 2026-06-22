@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { HistoryNodeData } from '@/types/history';
 import type { AnimationConfig } from '@/types/animation';
+import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
 import styles from './index.module.css';
 
 interface NodeDetailProps {
@@ -69,6 +70,21 @@ export function NodeDetail({ data, onCommitEdit }: NodeDetailProps) {
     });
   };
 
+  const handleCopyDetail = async () => {
+    const detail = {
+      config: data.config,
+      dom: data.customDom ?? null,
+      style: data.customStyle ?? null,
+    };
+    const formatted = JSON.stringify(detail);
+    try {
+      await navigator.clipboard.writeText(formatted);
+      dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '详情已复制到剪贴板', type: 'success' });
+    } catch (error) {
+      dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: `复制失败: ${(error as Error).message}`, type: 'error' });
+    }
+  };
+
   return (
     <div className={styles.detail}>
       <div className={styles.field}>
@@ -107,12 +123,34 @@ export function NodeDetail({ data, onCommitEdit }: NodeDetailProps) {
         <button type="button" className={styles.buttonSecondary} onClick={handleRestore}>
           恢复
         </button>
+        <button type="button" className={styles.buttonSecondary} onClick={handleCopyDetail}>
+          复制详情
+        </button>
       </div>
 
       <div className={styles.meta}>
         <span>Source: {data.source}</span>
         <span>Time: {new Date(data.timestamp).toLocaleTimeString()}</span>
       </div>
+
+      {data.messages.length > 0 && (
+        <details className={styles.collapsibleSection}>
+          <summary className={styles.collapsibleHeader}>对话记录 ({data.messages.length} 条)</summary>
+          <div className={styles.conversationMessages}>
+            {data.messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`${styles.messageItem} ${
+                  msg.role === 'user' ? styles.messageItemUser : styles.messageItemAssistant
+                }`}
+              >
+                <div className={styles.messageRole}>{msg.role === 'user' ? '你' : 'AI 助手'}</div>
+                <div className={styles.messageContent}>{msg.content}</div>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
 
       <details className={styles.collapsibleSection}>
         <summary className={styles.collapsibleHeader}>DOM</summary>

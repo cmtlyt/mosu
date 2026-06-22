@@ -1,6 +1,7 @@
 export { AnimationPlayer } from './player';
 export type {
   AnimationHandle,
+  AnimationLogger,
   PlayerEventMap,
   PlayerOptions,
   EventHandler,

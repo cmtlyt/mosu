@@ -11,6 +11,7 @@ interface InputAreaProps {
 
 export const InputArea = memo(({ isStreaming, toggleGroupRef, onSend }: InputAreaProps) => {
   const [inputValue, setInputValue] = useState('');
+  const [isComposing, setIsComposing] = useState(false);
 
   const doSend = () => {
     const trimmed = inputValue.trim();
@@ -22,7 +23,7 @@ export const InputArea = memo(({ isStreaming, toggleGroupRef, onSend }: InputAre
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
+    if (event.key === 'Enter' && !event.shiftKey && !isComposing) {
       event.preventDefault();
       doSend();
     }
@@ -41,6 +42,8 @@ export const InputArea = memo(({ isStreaming, toggleGroupRef, onSend }: InputAre
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
             placeholder={isStreaming ? 'AI 正在回复...' : '描述动画效果或预览场景，如"创建三个卡片布局"...'}
             aria-label="动画描述输入框"
           />

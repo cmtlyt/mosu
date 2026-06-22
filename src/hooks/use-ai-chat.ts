@@ -14,6 +14,8 @@ export interface SendMessageOptions {
   includeCss?: boolean;
   includeAnimationConfig?: boolean;
   currentStyle?: string | null;
+  includeFullContext?: boolean;
+  conversationHistory?: ChatMessage[];
 }
 
 interface UseAIChatReturn {
@@ -26,7 +28,37 @@ interface UseAIChatReturn {
   ) => Promise<{ response: AIEditorResponse | null; messages: ChatMessage[] }>;
 }
 
+function parseJsonToResponse(parsed: unknown): AIEditorResponse | null {
+  if (!parsed || typeof parsed !== 'object') {
+    return null;
+  }
+
+  if ('tracks' in parsed && !('config' in parsed)) {
+    const { name, ...configData } = parsed as { name?: string } & Pick<AnimationConfig, 'tracks' | 'triggerGroups'>;
+    return { name: name ?? '动画更新', config: configData };
+  }
+
+  return parsed as AIEditorResponse;
+}
+
 function parseAIResponse(raw: string): AIEditorResponse | null {
+  // 优先：用正则从 <mosu-response> 标签中提取原始 JSON 文本（避免 DOMParser 解析内部 HTML 导致标签丢失）
+  const tagMatch = raw.match(/<mosu-response>([\s\S]*?)<\/mosu-response>/u);
+  if (tagMatch) {
+    try {
+      const parsed = JSON.parse(tagMatch[1].trim());
+      const result = parseJsonToResponse(parsed);
+      if (result) {
+        return result;
+      }
+    } catch {
+      /* fall through to fallback */
+    }
+  }
+
+  // 降级：兼容旧格式（直接 JSON 或正则提取）
+  logger.warn('hooks.use-ai-chat.parse', 'LLM did not wrap response in <mosu-response> tag, using fallback parser');
+
   try {
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === 'object' && 'config' in parsed) {
@@ -40,15 +72,9 @@ function parseAIResponse(raw: string): AIEditorResponse | null {
   if (match) {
     try {
       const parsed = JSON.parse(match[0]);
-      if (parsed && typeof parsed === 'object') {
-        if ('tracks' in parsed && !('config' in parsed)) {
-          const { name, ...configData } = parsed as { name?: string } & Pick<
-            AnimationConfig,
-            'tracks' | 'triggerGroups'
-          >;
-          return { name: name ?? '动画更新', config: configData };
-        }
-        return parsed as AIEditorResponse;
+      const result = parseJsonToResponse(parsed);
+      if (result) {
+        return result;
       }
     } catch {
       /* ignore */
@@ -125,6 +151,16 @@ export function useAIChat(): UseAIChatReturn {
           { role: 'system', content: SYSTEM_PROMPT },
           ...buildSystemDirectives(options),
         ];
+
+        if (options?.includeFullContext && options?.conversationHistory) {
+          const historyMessages: ChatCompletionMessageParam[] = options.conversationHistory
+            .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+            .map((msg) => ({
+              role: msg.role,
+              content: msg.content,
+            }));
+          chatMessages.push(...historyMessages);
+        }
 
         chatMessages.push({ role: 'user', content: buildUserContent(content, currentConfig, options) });
 
