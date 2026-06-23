@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { HistoryNodeData } from '@/types/history';
-import type { AnimationConfig } from '@/types/animation';
+import type { AnimationConfig } from '@lib/animation-sdk';
 import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
 import styles from './index.module.css';
 

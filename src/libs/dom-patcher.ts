@@ -1,6 +1,6 @@
 import type { DomPatchInstruction } from '@/types/dom-patch';
 import { sanitizeDom } from '@/libs/dom-sanitizer';
-import { logger } from '@/libs/logger';
+import { logger } from '@lib/logger';
 
 interface PatchResult {
   applied: number;

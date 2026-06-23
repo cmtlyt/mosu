@@ -1,4 +1,4 @@
-import type { AnimationConfig, AnimationTrack } from '@/types/animation';
+import type { AnimationConfig, AnimationTrack } from './types';
 import { EventEmitter } from './events';
 import type { AnimationHandleImpl } from './handle';
 import type {

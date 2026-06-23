@@ -1,4 +1,4 @@
-import type { AnimationTrack, AnimationTriggerGroup } from './animation';
+import type { AnimationTrack, AnimationTriggerGroup } from '@lib/animation-sdk';
 
 export type AnimationPatchOp =
   | 'addTrack'

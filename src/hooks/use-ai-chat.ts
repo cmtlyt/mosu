@@ -1,12 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
-import type { AnimationConfig } from '@/types/animation';
+import type { AnimationConfig } from '@lib/animation-sdk';
 import type { AIEditorResponse } from '@/types/ai-response';
 import type { ChatMessage } from '@/types/history';
+import type { ChatCompletionMessageParam } from '@/types/openai';
 import { streamChat } from '@/utils/editor/ai-engine';
-import { logger } from '@/libs/logger';
+import { logger } from '@lib/logger';
 import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
-import { SYSTEM_PROMPT } from '@/constants/ai';
-import type { ChatCompletionMessageParam } from '@mlc-ai/web-llm';
 
 export interface SendMessageOptions {
   domContent?: string;
@@ -122,7 +121,7 @@ export function useAIChat(): UseAIChatReturn {
   const sendMessage = useCallback(
     async (content: string, currentConfig: AnimationConfig, options?: SendMessageOptions) => {
       if (streamingRef.current) {
-        logger.warn('hooks.use-ai-chat.send', 'Cannot send message while streaming');
+        logger.warn('hooks.use-ai-chat.send', 'Cannot send message while stream');
         return { response: null, messages };
       }
 
@@ -147,10 +146,7 @@ export function useAIChat(): UseAIChatReturn {
       dispatchEditorEvent(EDITOR_EVENTS.AI_STREAM_START);
 
       try {
-        const chatMessages: ChatCompletionMessageParam[] = [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...buildSystemDirectives(options),
-        ];
+        const chatMessages: ChatCompletionMessageParam[] = [...buildSystemDirectives(options)];
 
         if (options?.includeFullContext && options?.conversationHistory) {
           const historyMessages: ChatCompletionMessageParam[] = options.conversationHistory

@@ -20,7 +20,7 @@
 
 ```typescript
 // src/types/ai-response.ts
-import type { AnimationPatchInstruction } from "./animation-patch";
+import type { AnimationPatchInstruction } from './animation-patch';
 
 export interface AIEditorResponse {
   domPatch?: DomPatchInstruction[];
@@ -28,7 +28,7 @@ export interface AIEditorResponse {
   /** 动画增量变更指令，与 config 互斥 */
   animationPatch?: AnimationPatchInstruction[];
   /** 动画全量配置（仅在全新场景时使用，与 animationPatch 互斥） */
-  config?: Pick<AnimationConfig, "tracks" | "triggerGroups"> & {
+  config?: Pick<AnimationConfig, 'tracks' | 'triggerGroups'> & {
     name?: string;
   };
 }
@@ -45,15 +45,15 @@ export interface AIEditorResponse {
 新增 `src/types/animation-patch.ts`：
 
 ```typescript
-import type { AnimationTrack, AnimationTriggerGroup } from "./animation";
+import type { AnimationTrack, AnimationTriggerGroup } from './animation';
 
 export type AnimationPatchOp =
-  | "addTrack"
-  | "removeTrack"
-  | "updateTrack"
-  | "addTriggerGroup"
-  | "removeTriggerGroup"
-  | "updateTriggerGroup";
+  | 'addTrack'
+  | 'removeTrack'
+  | 'updateTrack'
+  | 'addTriggerGroup'
+  | 'removeTriggerGroup'
+  | 'updateTriggerGroup';
 
 export interface AnimationPatchInstruction {
   /** 操作类型 */
@@ -65,7 +65,7 @@ export interface AnimationPatchInstruction {
   /** updateTrack 时的轨道 ID（必填） */
   trackId?: string;
   /** updateTrack 时的部分更新字段（与 track 互斥） */
-  trackUpdate?: Partial<Omit<AnimationTrack, "id">>;
+  trackUpdate?: Partial<Omit<AnimationTrack, 'id'>>;
 
   // --- removeTrack ---
   /** removeTrack 时的轨道 ID */
@@ -90,9 +90,9 @@ export interface AnimationPatchInstruction {
 新增 `src/libs/animation-patcher.ts`：
 
 ```typescript
-import type { AnimationConfig } from "@/types/animation";
-import type { AnimationPatchInstruction } from "@/types/animation-patch";
-import { logger } from "@/libs/logger";
+import type { AnimationConfig } from '@lib/animation-sdk';
+import type { AnimationPatchInstruction } from '@lib/animation-sdk-patch';
+import { logger } from '@lib/logger';
 
 interface PatchResult {
   applied: number;
@@ -118,11 +118,7 @@ export function applyAnimationPatch(
       result.applied++;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.warn(
-        "libs.animation-patcher.skip",
-        `Patch skipped: ${message}`,
-        patch,
-      );
+      logger.warn('libs.animation-patcher.skip', `Patch skipped: ${message}`, patch);
       result.skipped++;
       result.errors.push(message);
     }
@@ -168,27 +164,24 @@ function mergeConsecutiveUpdates(patches: AnimationPatchInstruction[]): void {
   // 因为后续 updateTrack 会覆盖前面的同字段更新
 }
 
-function applySinglePatch(
-  config: AnimationConfig,
-  patch: AnimationPatchInstruction,
-): void {
+function applySinglePatch(config: AnimationConfig, patch: AnimationPatchInstruction): void {
   switch (patch.op) {
-    case "addTrack":
+    case 'addTrack':
       applyAddTrack(config, patch);
       break;
-    case "removeTrack":
+    case 'removeTrack':
       applyRemoveTrack(config, patch);
       break;
-    case "updateTrack":
+    case 'updateTrack':
       applyUpdateTrack(config, patch);
       break;
-    case "addTriggerGroup":
+    case 'addTriggerGroup':
       applyAddTriggerGroup(config, patch);
       break;
-    case "removeTriggerGroup":
+    case 'removeTriggerGroup':
       applyRemoveTriggerGroup(config, patch);
       break;
-    case "updateTriggerGroup":
+    case 'updateTriggerGroup':
       applyUpdateTriggerGroup(config, patch);
       break;
     default:
@@ -196,15 +189,12 @@ function applySinglePatch(
   }
 }
 
-function applyAddTrack(
-  config: AnimationConfig,
-  patch: AnimationPatchInstruction,
-): void {
+function applyAddTrack(config: AnimationConfig, patch: AnimationPatchInstruction): void {
   if (!patch.track) {
-    throw new Error("addTrack: missing track definition");
+    throw new Error('addTrack: missing track definition');
   }
   if (!patch.track.id) {
-    throw new Error("addTrack: track.id is required");
+    throw new Error('addTrack: track.id is required');
   }
   // 检查 ID 冲突
   if (config.tracks.some((track) => track.id === patch.track!.id)) {
@@ -213,12 +203,9 @@ function applyAddTrack(
   config.tracks.push(patch.track);
 }
 
-function applyRemoveTrack(
-  config: AnimationConfig,
-  patch: AnimationPatchInstruction,
-): void {
+function applyRemoveTrack(config: AnimationConfig, patch: AnimationPatchInstruction): void {
   if (!patch.trackId) {
-    throw new Error("removeTrack: missing trackId");
+    throw new Error('removeTrack: missing trackId');
   }
   const index = config.tracks.findIndex((track) => track.id === patch.trackId);
   if (index === -1) {
@@ -227,15 +214,12 @@ function applyRemoveTrack(
   config.tracks.splice(index, 1);
 }
 
-function applyUpdateTrack(
-  config: AnimationConfig,
-  patch: AnimationPatchInstruction,
-): void {
+function applyUpdateTrack(config: AnimationConfig, patch: AnimationPatchInstruction): void {
   if (!patch.trackId) {
-    throw new Error("updateTrack: missing trackId");
+    throw new Error('updateTrack: missing trackId');
   }
   if (!patch.trackUpdate) {
-    throw new Error("updateTrack: missing trackUpdate");
+    throw new Error('updateTrack: missing trackUpdate');
   }
   const index = config.tracks.findIndex((track) => track.id === patch.trackId);
   if (index === -1) {
@@ -248,15 +232,12 @@ function applyUpdateTrack(
   };
 }
 
-function applyAddTriggerGroup(
-  config: AnimationConfig,
-  patch: AnimationPatchInstruction,
-): void {
+function applyAddTriggerGroup(config: AnimationConfig, patch: AnimationPatchInstruction): void {
   if (!patch.groupId) {
-    throw new Error("addTriggerGroup: missing groupId");
+    throw new Error('addTriggerGroup: missing groupId');
   }
   if (!patch.group) {
-    throw new Error("addTriggerGroup: missing group definition");
+    throw new Error('addTriggerGroup: missing group definition');
   }
   if (!config.triggerGroups) {
     config.triggerGroups = {};
@@ -267,12 +248,9 @@ function applyAddTriggerGroup(
   config.triggerGroups[patch.groupId] = patch.group;
 }
 
-function applyRemoveTriggerGroup(
-  config: AnimationConfig,
-  patch: AnimationPatchInstruction,
-): void {
+function applyRemoveTriggerGroup(config: AnimationConfig, patch: AnimationPatchInstruction): void {
   if (!patch.groupId) {
-    throw new Error("removeTriggerGroup: missing groupId");
+    throw new Error('removeTriggerGroup: missing groupId');
   }
   if (!config.triggerGroups || !config.triggerGroups[patch.groupId]) {
     throw new Error(`removeTriggerGroup: group "${patch.groupId}" not found`);
@@ -280,15 +258,12 @@ function applyRemoveTriggerGroup(
   delete config.triggerGroups[patch.groupId];
 }
 
-function applyUpdateTriggerGroup(
-  config: AnimationConfig,
-  patch: AnimationPatchInstruction,
-): void {
+function applyUpdateTriggerGroup(config: AnimationConfig, patch: AnimationPatchInstruction): void {
   if (!patch.groupId) {
-    throw new Error("updateTriggerGroup: missing groupId");
+    throw new Error('updateTriggerGroup: missing groupId');
   }
   if (!patch.groupUpdate) {
-    throw new Error("updateTriggerGroup: missing groupUpdate");
+    throw new Error('updateTriggerGroup: missing groupUpdate');
   }
   if (!config.triggerGroups || !config.triggerGroups[patch.groupId]) {
     throw new Error(`updateTriggerGroup: group "${patch.groupId}" not found`);

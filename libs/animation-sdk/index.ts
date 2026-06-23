@@ -8,6 +8,6 @@ export type {
   Unsubscribe,
   AnimationConfig,
 } from './types';
-export type { AnimationTrigger, AnimationTriggerType, AnimationTriggerGroup } from '@/types/animation';
+export type { AnimationTrigger, AnimationTriggerType, AnimationTriggerGroup, AnimationTrack } from './types';
 export type { ResolvedTriggerGroup } from './trigger-resolver';
 export { resolveTriggerGroups, classifyGroupsByType, computeTotalDelay } from './trigger-resolver';

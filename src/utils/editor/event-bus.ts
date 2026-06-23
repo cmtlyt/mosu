@@ -1,4 +1,4 @@
-import { logger } from '@/libs/logger';
+import { logger } from '@lib/logger';
 
 /** 编辑器事件类型 */
 export const EDITOR_EVENTS = {

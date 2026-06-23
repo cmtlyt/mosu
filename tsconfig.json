@@ -12,7 +12,9 @@
     "jsxImportSource": "react",
     "skipLibCheck": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@mosu/*": ["./server/*"],
+      "@lib/*": ["./libs/*"]
     }
   },
   "include": ["node_modules/vite/client.d.ts", "**/*"]

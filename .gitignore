@@ -1,7 +1,6 @@
 # build output
 dist/
-dist-ssr/
-dist-npm/
+dist-*/
 
 # dependencies
 node_modules/
@@ -13,7 +12,6 @@ yarn-error.log*
 pnpm-debug.log*
 
 # environment variables
-.env
 .env.local
 .env.production
 

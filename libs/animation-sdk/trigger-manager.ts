@@ -1,4 +1,4 @@
-import type { AnimationTrack } from '@/types/animation';
+import type { AnimationTrack } from './types';
 import { classifyGroupsByType, computeTotalDelay } from './trigger-resolver';
 import type { ResolvedTriggerGroup } from './trigger-resolver';
 import type { AnimationHandleImpl } from './handle';

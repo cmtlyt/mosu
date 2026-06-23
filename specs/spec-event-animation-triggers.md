@@ -101,23 +101,25 @@ export interface AIEditorResponse {
 
 ### 2.2 触发器类型语义
 
-| 类型 | 语义 | 事件监听 | 典型场景 |
-| --- | --- | --- | --- |
-| `auto` | 自动播放（默认），`apply()` 时立即创建并播放 | 无 | 入场动画、apply 即播放的动画 |
-| `click` | 点击触发 | `click`（事件委托） | 点击按钮后播放动画 |
-| `hover` | 悬停触发，离开时**取消**动画（重置到起点） | `mouseover` / `mouseout`（事件委托） | 鼠标悬停时播放，离开时取消重置 |
-| `scroll` | 滚动触发 | `scroll` | 容器滚动时触发动画 |
-| `viewport` | 进入视口触发 | `IntersectionObserver` | 元素滚动到可视区域时播放 |
+| 类型       | 语义                                         | 事件监听                             | 典型场景                       |
+| ---------- | -------------------------------------------- | ------------------------------------ | ------------------------------ |
+| `auto`     | 自动播放（默认），`apply()` 时立即创建并播放 | 无                                   | 入场动画、apply 即播放的动画   |
+| `click`    | 点击触发                                     | `click`（事件委托）                  | 点击按钮后播放动画             |
+| `hover`    | 悬停触发，离开时**取消**动画（重置到起点）   | `mouseover` / `mouseout`（事件委托） | 鼠标悬停时播放，离开时取消重置 |
+| `scroll`   | 滚动触发                                     | `scroll`                             | 容器滚动时触发动画             |
+| `viewport` | 进入视口触发                                 | `IntersectionObserver`               | 元素滚动到可视区域时播放       |
 
 ### 2.2.1 触发器分组（triggerGroups）
 
 通过 `AnimationConfig.triggerGroups` 定义触发器分组，轨道通过 `trigger.group` 引用分组 ID。分组定义了**事件类型和目标**，轨道只需声明**行为控制属性**（如 `once`、`delay`）。
 
 **职责分离**：
+
 - **triggerGroups**（组级）：定义 `type`（事件类型）和 `target`（触发目标选择器）
 - **track.trigger**（轨道级）：引用 `group` ID + 行为控制属性（`once`、`delay`）
 
 **规则**：
+
 - 轨道配置了 `trigger.group` 后，`type` 和 `target` 从分组继承，无需重复配置
 - 事件触发时，组内所有轨道同时创建动画并播放
 - 每个轨道的 `delay` 独立生效（轨道级延迟在组级延迟之后叠加）
@@ -484,6 +486,7 @@ AI 返回的动画配置可包含事件触发器和触发器分组：
 ```
 
 **说明**：
+
 - `btn-scale` 和 `btn-color` 通过 `trigger.group: "btn-click"` 引用同一个分组，点击 `.cta-button` 时两个动画同时触发
 - `btn-scale` 配置了 `once: true`（只触发一次），`btn-color` 没有（每次点击都触发）
 - `btn-color` 配置了 `delay: 100`（延迟 100ms 后播放），`btn-scale` 立即播放
@@ -491,35 +494,35 @@ AI 返回的动画配置可包含事件触发器和触发器分组：
 
 ## 3. 文件变更清单
 
-| 文件 | 变更类型 | 说明 |
-| --- | --- | --- |
-| `src/types/animation.ts` | 修改 | 新增 `AnimationTrigger`、`AnimationTriggerType`、`AnimationTriggerGroup` 类型，`AnimationTrack` 新增 `trigger` 字段，`AnimationConfig` 新增 `triggerGroups` 字段 |
-| `src/types/ai-response.ts` | 修改 | `AIEditorResponse.config` 的 Pick 扩展为包含 `triggerGroups` |
-| `src/libs/animation-sdk/types.ts` | 修改 | `PlayerEventMap` 新增 `trigger-bound`、`trigger-fired` 事件 |
-| `src/libs/animation-sdk/player.ts` | 修改 | 新增 `resolveGroups`、`bindTriggerGroups`、`fireTriggeredGroup`、`cleanupTriggers` 方法，修改 `apply`、`destroy` 逻辑，新增 `triggerHandles`、`delegatedHandlers`、`resolvedGroups`、`intersectionObservers`、`firedTrackIds` 私有字段 |
-| `src/libs/animation-sdk/trigger-resolver.ts` | 新增 | 抽离触发器分组解析、事件委托绑定等纯函数/独立模块，避免 player.ts 逻辑膨胀 |
-| `src/libs/animation-sdk/index.ts` | 修改 | 导出 `AnimationTrigger`、`AnimationTriggerType`、`AnimationTriggerGroup` 类型 |
-| `src/hooks/use-ai-chat.ts` | 修改 | `SYSTEM_PROMPT` 补充 `triggerGroups` 和 `trigger` 的 Schema 示例与规则说明 |
+| 文件                                         | 变更类型 | 说明                                                                                                                                                                                                                                   |
+| -------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/types/animation.ts`                     | 修改     | 新增 `AnimationTrigger`、`AnimationTriggerType`、`AnimationTriggerGroup` 类型，`AnimationTrack` 新增 `trigger` 字段，`AnimationConfig` 新增 `triggerGroups` 字段                                                                       |
+| `src/types/ai-response.ts`                   | 修改     | `AIEditorResponse.config` 的 Pick 扩展为包含 `triggerGroups`                                                                                                                                                                           |
+| `src/libs/animation-sdk/types.ts`            | 修改     | `PlayerEventMap` 新增 `trigger-bound`、`trigger-fired` 事件                                                                                                                                                                            |
+| `src/libs/animation-sdk/player.ts`           | 修改     | 新增 `resolveGroups`、`bindTriggerGroups`、`fireTriggeredGroup`、`cleanupTriggers` 方法，修改 `apply`、`destroy` 逻辑，新增 `triggerHandles`、`delegatedHandlers`、`resolvedGroups`、`intersectionObservers`、`firedTrackIds` 私有字段 |
+| `src/libs/animation-sdk/trigger-resolver.ts` | 新增     | 抽离触发器分组解析、事件委托绑定等纯函数/独立模块，避免 player.ts 逻辑膨胀                                                                                                                                                             |
+| `src/libs/animation-sdk/index.ts`            | 修改     | 导出 `AnimationTrigger`、`AnimationTriggerType`、`AnimationTriggerGroup` 类型                                                                                                                                                          |
+| `src/hooks/use-ai-chat.ts`                   | 修改     | `SYSTEM_PROMPT` 补充 `triggerGroups` 和 `trigger` 的 Schema 示例与规则说明                                                                                                                                                             |
 
 ## 4. 边界情况处理
 
-| 场景 | 处理方式 |
-| --- | --- |
-| `trigger.target` 选择器在容器内未找到 | 发出 `target-missing` 事件，跳过该轨道，不抛出异常 |
-| `trigger.type` 为未知值 | 发出 warn 日志，跳过该轨道 |
-| `trigger.once: true` 且事件已触发 | 触发后记录到 `firedTrackIds`，后续交互不再触发，`cleanupTriggers()` 时清空 |
-| `hover` 触发后鼠标快速离开 | `mouseout` 时**取消**动画（重置到起点），下次进入时从头播放 |
-| `viewport` 触发后元素被移出视口 | `IntersectionObserver` 不会自动暂停动画，动画继续播放直到完成 |
-| `scroll` 触发频繁触发 | 若 `once: false`，每次滚动都会创建新动画实例，可能导致性能问题；建议配合 `once: true` 使用 |
-| 播放器 `destroy()` 后触发器仍被触发 | `fireTrack` 内部检查 `destroyed` 标志，已销毁时静默返回 |
-| 同一轨道同时配置 `auto` 和 `click` | `trigger.type === 'auto'` 时按自动播放处理，忽略其他触发器配置 |
-| `trigger.delay` 期间播放器被销毁 | `setTimeout` 回调中检查 `destroyed` 标志，已销毁时不执行 |
-| `trigger.group` 引用了不存在的分组 ID | 发出 warn 日志，跳过该轨道 |
-| 分组定义中的 `target` 元素未找到 | 组内所有轨道均发出 `target-missing` 事件 |
-| 组内某个轨道的动画目标（`track.target`）未找到 | 该轨道跳过，不影响组内其他轨道正常触发 |
-| 组内各轨道 `once` 配置不同 | 每个轨道独立控制，互不影响 |
-| 组内各轨道 `delay` 配置不同 | 每个轨道独立计算延迟（组级 delay + 轨道级 delay），互不影响 |
-| 轨道配置了 `trigger.group` 同时又配置了 `trigger.type` | `type` 被忽略，以分组定义的 `type` 为准 |
+| 场景                                                   | 处理方式                                                                                   |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `trigger.target` 选择器在容器内未找到                  | 发出 `target-missing` 事件，跳过该轨道，不抛出异常                                         |
+| `trigger.type` 为未知值                                | 发出 warn 日志，跳过该轨道                                                                 |
+| `trigger.once: true` 且事件已触发                      | 触发后记录到 `firedTrackIds`，后续交互不再触发，`cleanupTriggers()` 时清空                 |
+| `hover` 触发后鼠标快速离开                             | `mouseout` 时**取消**动画（重置到起点），下次进入时从头播放                                |
+| `viewport` 触发后元素被移出视口                        | `IntersectionObserver` 不会自动暂停动画，动画继续播放直到完成                              |
+| `scroll` 触发频繁触发                                  | 若 `once: false`，每次滚动都会创建新动画实例，可能导致性能问题；建议配合 `once: true` 使用 |
+| 播放器 `destroy()` 后触发器仍被触发                    | `fireTrack` 内部检查 `destroyed` 标志，已销毁时静默返回                                    |
+| 同一轨道同时配置 `auto` 和 `click`                     | `trigger.type === 'auto'` 时按自动播放处理，忽略其他触发器配置                             |
+| `trigger.delay` 期间播放器被销毁                       | `setTimeout` 回调中检查 `destroyed` 标志，已销毁时不执行                                   |
+| `trigger.group` 引用了不存在的分组 ID                  | 发出 warn 日志，跳过该轨道                                                                 |
+| 分组定义中的 `target` 元素未找到                       | 组内所有轨道均发出 `target-missing` 事件                                                   |
+| 组内某个轨道的动画目标（`track.target`）未找到         | 该轨道跳过，不影响组内其他轨道正常触发                                                     |
+| 组内各轨道 `once` 配置不同                             | 每个轨道独立控制，互不影响                                                                 |
+| 组内各轨道 `delay` 配置不同                            | 每个轨道独立计算延迟（组级 delay + 轨道级 delay），互不影响                                |
+| 轨道配置了 `trigger.group` 同时又配置了 `trigger.type` | `type` 被忽略，以分组定义的 `type` 为准                                                    |
 
 ## 5. 实现约束
 
@@ -564,6 +567,7 @@ export function computeTotalDelay(groupDef: AnimationTriggerGroup, track: Animat
 ```
 
 **优势**：
+
 - 纯函数无 `this` 依赖，易于单元测试
 - 语义清晰，职责单一
 - 可被其他模块复用（如预览页、调试工具）
@@ -574,6 +578,7 @@ export function computeTotalDelay(groupDef: AnimationTriggerGroup, track: Animat
 `src/hooks/use-ai-chat.ts` 中的 `SYSTEM_PROMPT` 需要补充触发器相关内容：
 
 **Schema 示例中增加**：
+
 ```json
 {
   "config": {
@@ -601,6 +606,7 @@ export function computeTotalDelay(groupDef: AnimationTriggerGroup, track: Animat
 ```
 
 **关键规则中增加**：
+
 - `triggerGroups` 为可选对象，key 为分组 ID，值为 `{ type, target, delay? }`
 - `trigger` 为 track 的可选字段，配置 `group` 引用分组 ID 时，`type` 和 `target` 从分组继承
 - 无 `trigger` 或 `trigger.type === "auto"` 的轨道在 apply 时自动播放

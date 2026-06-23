@@ -1,10 +1,6 @@
-export const MODEL_ID_MAP = {
-  high: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC',
-  middle: 'Llama-3.2-1B-Instruct-q4f16_1-MLC',
-  low: 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC',
-};
+import type { ChatCompletionMessageParam } from '@/types/openai';
 
-export const SYSTEM_PROMPT = `你是动画编辑器助手，根据用户需求输出合法 JSON（不含 markdown 标记）。
+export const EDITOR_SYSTEM_PROMPT = `你是动画编辑器助手，根据用户需求输出合法 JSON（不含 markdown 标记）。
 
 ## 输出格式（强制规则）
 你必须将响应 JSON 对象包裹在 <mosu-response> 标签中，标签外不得有任何其他内容。
@@ -92,3 +88,26 @@ html 禁止 <script> 和事件属性。selector 基于 DOM 摘要中的 class/id
 
 ## 动画配置携带模式规则
 当收到"[系统指令] 未启用动画配置携带模式"时，**禁止**返回 config 和 animationPatch 字段，仅允许返回 name、domPatch、style。`;
+
+export function buildEditorMessages(userMessage: string, context?: string): ChatCompletionMessageParam[] {
+  const messages: ChatCompletionMessageParam[] = [
+    {
+      role: 'system',
+      content: EDITOR_SYSTEM_PROMPT,
+    },
+  ];
+
+  if (context) {
+    messages.push({
+      role: 'user',
+      content: `代码上下文：\n\`\`\`\n${context}\n\`\`\``,
+    });
+  }
+
+  messages.push({
+    role: 'user',
+    content: userMessage,
+  });
+
+  return messages;
+}

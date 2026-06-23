@@ -1,5 +1,5 @@
-import type { AnimationConfig } from '@/types/animation';
-import { logger } from '@/libs/logger';
+import type { AnimationConfig } from '@lib/animation-sdk';
+import { logger } from '@lib/logger';
 import { dispatchEditorEvent, EDITOR_EVENTS } from './event-bus';
 
 /** 完整的动画项目数据，包含配置、DOM 和样式 */

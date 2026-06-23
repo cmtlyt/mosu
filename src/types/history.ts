@@ -1,4 +1,4 @@
-import type { AnimationConfig } from './animation';
+import type { AnimationConfig } from '@lib/animation-sdk';
 
 export interface ChatMessage {
   id: string;

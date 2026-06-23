@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, getRouteApi, Link, useNavigate } from '@tanstack/react-router';
 import { PreviewCanvas, type PreviewCanvasHandle } from '@/components/preview/preview-canvas';
-import { AnimationPlayer } from '@/libs/animation-sdk';
+import { AnimationPlayer } from '@lib/animation-sdk';
 import { createChildBridge } from '@/utils/iframe-bridge';
 import { decodeConfigFromQuery, type AnimationProjectData } from '@/utils/editor/share-utils';
-import { logger } from '@/libs/logger';
-import type { AnimationConfig } from '@/types/animation';
+import { logger } from '@lib/logger';
+import type { AnimationConfig } from '@lib/animation-sdk';
 import styles from '@/styles/preview.module.css';
 import toolbarStyles from '@/components/editor/editor-toolbar/index.module.css';
 

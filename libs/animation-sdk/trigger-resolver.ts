@@ -1,4 +1,4 @@
-import type { AnimationTrack, AnimationTriggerGroup } from '@/types/animation';
+import type { AnimationTrack, AnimationTriggerGroup } from './types';
 
 /** 解析后的触发器分组 */
 export interface ResolvedTriggerGroup {

@@ -1,6 +1,6 @@
-import type { AnimationConfig } from '@/types/animation';
+import type { AnimationConfig } from '@lib/animation-sdk';
 import type { AnimationPatchInstruction } from '@/types/animation-patch';
-import { logger } from '@/libs/logger';
+import { logger } from '@lib/logger';
 
 interface PatchResult {
   applied: number;

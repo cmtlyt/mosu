@@ -1,23 +1,36 @@
 {
   "name": "@cmtlyt/mosu",
   "version": "0.1.1",
-  "private": true,
+  "bin": {
+    "mosu": "./dist-cli/index.js"
+  },
   "files": [
+    "dist",
+    "dist-cli",
     "dist-npm"
   ],
   "type": "module",
   "exports": {
     "./animation-sdk": {
-      "import": "./dist-npm/animation-sdk.mjs",
-      "require": "./dist-npm/animation-sdk.cjs",
-      "types": "./dist-npm/index.d.ts"
+      "import": "./dist-npm/animation-sdk/animation-sdk.mjs",
+      "require": "./dist-npm/animation-sdk/animation-sdk.cjs",
+      "types": "./dist-npm/animation-sdk/libs/animation-sdk/index.d.ts"
+    },
+    "./api": {
+      "import": "./dist-npm/api/api-client.mjs",
+      "require": "./dist-npm/api/api-client.cjs",
+      "types": "./dist-npm/api/libs/api-client.d.ts"
     }
   },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:npm": "vite build --config vite.config.npm.ts",
+    "build:cli": "MOSU_BUILD_TARGET=cli vite build",
+    "build:npm": "esno scripts/npm-build.ts",
+    "build:all": "pnpm build && pnpm build:cli && pnpm build:npm",
     "preview": "vite preview",
+    "start": "node dist-cli/index.js",
+    "prepublishOnly": "pnpm build:all",
     "lint": "oxlint",
     "lint:github": "oxlint --format=github",
     "lint:fix": "oxlint --fix",
@@ -26,27 +39,33 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@cmtlyt/lingshu-toolkit": "^0.10.0",
     "@cmtlyt/logger": "^0.6.1",
-    "@mlc-ai/web-llm": "^0.2.84",
-    "@tanstack/react-router": "^1.170.15",
-    "motion": "^12.40.0",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "@hono/node-server": "^2.0.5",
+    "@hono/zod-openapi": "^1.4.0",
+    "dotenv": "^17.4.2",
+    "hono": "^4.12.26",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@cmtlyt/lingshu-toolkit": "^0.10.0",
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
+    "@hono/vite-dev-server": "^0.26.0",
+    "@mlc-ai/web-llm": "^0.2.84",
+    "@tanstack/react-router": "^1.170.15",
     "@tanstack/router-plugin": "^1.168.18",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@typescript/native-preview": "7.0.0-dev.20260612.1",
     "@vitejs/plugin-react-oxc": "^0.4.3",
     "changelogithub": "^14.0.0",
+    "esno": "^4.8.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.7",
     "oxfmt": "^0.54.0",
     "oxlint": "^1.69.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "vite": "^8.0.16",
     "vite-plugin-dts": "^4.5.4"
   },

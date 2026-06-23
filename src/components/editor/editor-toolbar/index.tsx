@@ -1,11 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
 import { Link } from '@tanstack/react-router';
-import type { AnimationConfig } from '@/types/animation';
+import type { AnimationConfig } from '@lib/animation-sdk';
 import { LocalhostServerTemplate } from '@/components/editor/localhost-server-template';
 import { AnimationGuide } from '@/components/editor/animation-guide';
 import { exportProjectToFile, importProjectFromFile, encodeConfigToQuery } from '@/utils/editor/share-utils';
 import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
-import { logger } from '@/libs/logger';
+import { logger } from '@lib/logger';
 import styles from './index.module.css';
 
 const AI_MODE_KEY = 'mosu_ai_mode';

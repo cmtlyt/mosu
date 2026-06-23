@@ -1,7 +1,6 @@
 import { useRef, useLayoutEffect, useEffect, useImperativeHandle, forwardRef } from 'react';
-import type { AnimationConfig } from '@/types/animation';
-import type { AnimationPlayer } from '@/libs/animation-sdk';
-import { logger } from '@/libs/logger';
+import type { AnimationConfig, AnimationPlayer } from '@lib/animation-sdk';
+import { logger } from '@lib/logger';
 import styles from './index.module.css';
 
 export interface PreviewCanvasHandle {

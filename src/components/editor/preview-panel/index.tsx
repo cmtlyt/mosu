@@ -1,8 +1,8 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
-import type { AnimationConfig } from '@/types/animation';
+import type { AnimationConfig } from '@lib/animation-sdk';
 import { createParentBridge } from '@/utils/iframe-bridge';
 import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
-import { logger } from '@/libs/logger';
+import { logger } from '@lib/logger';
 import styles from './index.module.css';
 
 interface PreviewPanelProps {

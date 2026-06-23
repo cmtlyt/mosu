@@ -26,10 +26,10 @@
 
 **交互逻辑**：
 
-| 按键组合       | 行为           |
-| -------------- | -------------- |
-| `Enter`        | 发送消息       |
-| `Shift + Enter`| 插入换行       |
+| 按键组合        | 行为     |
+| --------------- | -------- |
+| `Enter`         | 发送消息 |
+| `Shift + Enter` | 插入换行 |
 
 **高度自适应方案（纯 CSS，无 JS）**：
 
@@ -149,12 +149,12 @@ interface SendMessageOptions {
 
 2. `editor.tsx` 的 `handleSendMessage` 根据开关状态决定传给 AI 的内容：
 
-| 开关状态                          | 传给 AI 的内容                                             |
-| --------------------------------- | ---------------------------------------------------------- |
-| `includeFullDom=true`             | 传入完整的 `currentDom` HTML 字符串                        |
-| `includeFullDom=false`            | 传入 `generateDomSummary(currentDom)` 的摘要               |
-| `includeCss=true`                 | 通过独立的 user prompt 启用 CSS 携带模式（见下方说明）     |
-| `includeCss=false`                | 不传 CSS 相关 prompt                                       |
+| 开关状态               | 传给 AI 的内容                                         |
+| ---------------------- | ------------------------------------------------------ |
+| `includeFullDom=true`  | 传入完整的 `currentDom` HTML 字符串                    |
+| `includeFullDom=false` | 传入 `generateDomSummary(currentDom)` 的摘要           |
+| `includeCss=true`      | 通过独立的 user prompt 启用 CSS 携带模式（见下方说明） |
+| `includeCss=false`     | 不传 CSS 相关 prompt                                   |
 
 3. `use-ai-chat.ts` 的 `sendMessage` 签名扩展：
 
@@ -163,8 +163,8 @@ sendMessage: (
   content: string,
   currentConfig: AnimationConfig,
   options?: {
-    domContent?: string;        // 完整 DOM 或摘要
-    includeCss?: boolean;       // 是否启用 CSS 携带模式
+    domContent?: string; // 完整 DOM 或摘要
+    includeCss?: boolean; // 是否启用 CSS 携带模式
     currentStyle?: string | null; // 当前 CSS 内容
   },
 ) => Promise<{ response: AIEditorResponse | null; messages: ChatMessage[] }>;
@@ -187,7 +187,7 @@ export const CSS_CARRY_MODE_RULE = `
 ```typescript
 // use-ai-chat.ts 中构建 chatMessages
 const chatMessages: ChatCompletionMessageParam[] = [
-  { role: 'system', content: SYSTEM_PROMPT },  // 固定，可被缓存
+  { role: 'system', content: SYSTEM_PROMPT }, // 固定，可被缓存
 ];
 
 // 如果启用 CSS 携带模式，追加一条独立的 user prompt
@@ -200,15 +200,13 @@ if (includeCss) {
 
 // 构建 DOM 信息：includeFullDom=true 传完整 HTML，false 传摘要
 const domInfo = domContent
-  ? (includeFullDom
-      ? `\n\n当前预览区域的完整 DOM：\n${domContent}`
-      : `\n\n当前预览区域的 DOM 结构摘要：\n${domContent}`)
+  ? includeFullDom
+    ? `\n\n当前预览区域的完整 DOM：\n${domContent}`
+    : `\n\n当前预览区域的 DOM 结构摘要：\n${domContent}`
   : '';
 
 // 构建 CSS 信息：仅在 includeCss=true 时传入当前样式
-const cssInfo = (includeCss && currentStyle)
-  ? `\n\n当前预览区域的 CSS 样式：\n${currentStyle}`
-  : '';
+const cssInfo = includeCss && currentStyle ? `\n\n当前预览区域的 CSS 样式：\n${currentStyle}` : '';
 
 // 主 user prompt
 chatMessages.push({
@@ -218,6 +216,7 @@ chatMessages.push({
 ```
 
 **设计优势**：
+
 - `SYSTEM_PROMPT` 保持不变，LLM 可缓存其 token，降低推理成本
 - CSS 携带模式规则作为 system prompt 的一部分，始终存在，只是通过 user prompt 激活
 - 避免每次请求都动态拼接 system prompt，减少 token 浪费
@@ -263,6 +262,7 @@ const finalStyle = computeStyles(currentStyle, sanitizedStyle, includeCss);
 ```
 
 **优势**：
+
 - 行为分流逻辑集中在一个函数内，易于维护和测试
 - `editor.tsx` 的 `handleSendMessage` 无需关心 CSS 模式的具体实现
 - 未来如需调整替换/合并策略，只需修改 `computeStyles` 一处
@@ -344,6 +344,7 @@ useEffect(() => {
 ```
 
 **优势**：
+
 - 使用 HTML5 `<details>` 和 `<summary>` 标签，浏览器原生支持展开/折叠
 - 无需 `useState` 管理展开状态，减少组件状态复杂度
 - 语义化标签，对无障碍访问（a11y）更友好
@@ -382,8 +383,8 @@ const handleSave = () => {
     label: editState.label,
     source: 'manual',
     messages: [],
-    customDom: data?.customDom ?? null,  // 保持原值，不支持编辑
-    customStyle: data?.customStyle ?? null,  // 保持原值，不支持编辑
+    customDom: data?.customDom ?? null, // 保持原值，不支持编辑
+    customStyle: data?.customStyle ?? null, // 保持原值，不支持编辑
   });
 };
 ```
@@ -477,40 +478,42 @@ commitAndSelect({
 ```
 
 **适用场景**：
+
 - `handleSendMessage`：AI 响应后创建新节点
 - `handleCustomChange`：手动更新 DOM/Style
 - `handleNodeEditCommit`：编辑节点配置后提交
 - `handleImportFile`：导入配置文件
 
 **不适用场景**（仍需原子方法）：
+
 - 需要在校验 `nodeId` 后再决定是否选中的场景
 - 需要批量 commit 多个节点但只选中最后一个的场景
 
 ## 3. 文件变更清单
 
-| 文件                                          | 变更类型 | 说明                                                                 |
-| --------------------------------------------- | -------- | -------------------------------------------------------------------- |
-| `src/components/editor/chat-panel.tsx`        | 修改     | input → textarea 多行输入；新增 DOM/CSS 携带开关；`onSendMessage` 签名变更 |
-| `src/components/editor/chat-panel.module.css` | 修改     | textarea 样式、开关区域样式                                          |
-| `src/hooks/use-ai-chat.ts`                    | 修改     | `sendMessage` 签名扩展，支持传入 CSS 上下文和开关选项；动态拼接 system prompt |
-| `src/constants/ai.ts`                         | 修改     | 新增 CSS 替换模式和增量模式的 prompt 常量                             |
-| `src/routes/editor.tsx`                       | 修改     | `handleSendMessage` 适配开关状态和 CSS 替换逻辑；新增 `handleNodeEditCommit` |
-| `src/components/editor/node-detail.tsx`       | 修改     | 新增编辑模式，支持 config/label/dom/style 编辑与校验提交              |
-| `src/components/editor/node-detail.module.css`| 修改     | 编辑模式相关样式                                                     |
-| `src/components/editor/branch-panel.tsx`      | 修改     | 透传 `onCommitEdit` 给 `NodeDetail`                                  |
+| 文件                                           | 变更类型 | 说明                                                                          |
+| ---------------------------------------------- | -------- | ----------------------------------------------------------------------------- |
+| `src/components/editor/chat-panel.tsx`         | 修改     | input → textarea 多行输入；新增 DOM/CSS 携带开关；`onSendMessage` 签名变更    |
+| `src/components/editor/chat-panel.module.css`  | 修改     | textarea 样式、开关区域样式                                                   |
+| `src/hooks/use-ai-chat.ts`                     | 修改     | `sendMessage` 签名扩展，支持传入 CSS 上下文和开关选项；动态拼接 system prompt |
+| `src/constants/ai.ts`                          | 修改     | 新增 CSS 替换模式和增量模式的 prompt 常量                                     |
+| `src/routes/editor.tsx`                        | 修改     | `handleSendMessage` 适配开关状态和 CSS 替换逻辑；新增 `handleNodeEditCommit`  |
+| `src/components/editor/node-detail.tsx`        | 修改     | 新增编辑模式，支持 config/label/dom/style 编辑与校验提交                      |
+| `src/components/editor/node-detail.module.css` | 修改     | 编辑模式相关样式                                                              |
+| `src/components/editor/branch-panel.tsx`       | 修改     | 透传 `onCommitEdit` 给 `NodeDetail`                                           |
 
 ## 4. 边界情况处理
 
-| 场景                                        | 处理方式                                                             |
-| ------------------------------------------- | -------------------------------------------------------------------- |
-| textarea 输入纯空白内容                     | trim 后为空则不发送，与现有行为一致                                  |
-| 快速连续按 Enter                            | `isStreaming` 期间禁止发送，与现有行为一致                           |
-| 两个开关都关闭                              | 仅传 `currentConfig` 和用户需求文本，AI 仍可正常返回 config          |
-| `includeCss=true` 但 AI 未返回 style        | `finalStyle` 保持 `currentStyle` 不变（`sanitizedStyle ?? currentStyle`） |
-| 编辑节点 config 时 JSON 格式错误            | textarea 下方显示红色错误提示，提交按钮仍可点击但校验不通过不创建节点 |
-| 编辑节点时清空 config textarea              | 校验失败，提示"配置不能为空"                                         |
-| 编辑节点提交后原节点                        | 原节点保持不变，新节点作为子节点创建                                 |
-| 未选中任何节点时 NodeDetail                   | 显示空状态提示，不显示编辑按钮                                       |
+| 场景                                 | 处理方式                                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------- |
+| textarea 输入纯空白内容              | trim 后为空则不发送，与现有行为一致                                       |
+| 快速连续按 Enter                     | `isStreaming` 期间禁止发送，与现有行为一致                                |
+| 两个开关都关闭                       | 仅传 `currentConfig` 和用户需求文本，AI 仍可正常返回 config               |
+| `includeCss=true` 但 AI 未返回 style | `finalStyle` 保持 `currentStyle` 不变（`sanitizedStyle ?? currentStyle`） |
+| 编辑节点 config 时 JSON 格式错误     | textarea 下方显示红色错误提示，提交按钮仍可点击但校验不通过不创建节点     |
+| 编辑节点时清空 config textarea       | 校验失败，提示"配置不能为空"                                              |
+| 编辑节点提交后原节点                 | 原节点保持不变，新节点作为子节点创建                                      |
+| 未选中任何节点时 NodeDetail          | 显示空状态提示，不显示编辑按钮                                            |
 
 ## 5. 验收标准
 

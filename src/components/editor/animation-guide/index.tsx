@@ -1,4 +1,4 @@
-import type { AnimationConfig } from '@/types/animation';
+import type { AnimationConfig } from '@lib/animation-sdk';
 import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
 import styles from './index.module.css';
 

@@ -27,8 +27,8 @@ useEffect(() => {
 
 ### 涉及文件
 
-| 文件 | 改动 |
-|------|------|
+| 文件                    | 改动                          |
+| ----------------------- | ----------------------------- |
 | `src/routes/editor.tsx` | 新增 `useEffect` 设置页面标题 |
 
 ---
@@ -82,9 +82,9 @@ useEffect(() => {
 
 ### 涉及文件
 
-| 文件 | 改动 |
-|------|------|
-| `src/routes/editor.tsx` | 重构 toolbar 结构，新增标题和按钮 |
+| 文件                           | 改动                                                          |
+| ------------------------------ | ------------------------------------------------------------- |
+| `src/routes/editor.tsx`        | 重构 toolbar 结构，新增标题和按钮                             |
 | `src/styles/editor.module.css` | 新增 `.toolbarTitle`、`.toolbarActions`，修改 `.toolbar` 布局 |
 
 ---
@@ -259,13 +259,13 @@ async function streamChatViaApi(
 
 ### 涉及文件
 
-| 文件 | 改动 |
-|------|------|
-| `src/routes/editor.tsx` | 新增 AI 配置弹窗 state、ref、handler、tab 切换逻辑，新增 "AI 配置" 按钮 |
-| `src/styles/editor.module.css` | 新增 `.aiConfigDialog`、`.aiConfigHeader`、`.aiConfigTabs`、`.aiConfigTab`、`.aiConfigTabActive`、`.aiConfigContent`、`.aiConfigForm`、`.aiConfigActions` 样式 |
-| `src/utils/editor/ai-engine.ts` | 新增 `streamChatViaApi` 函数，修改 `streamChat` 支持 API 模式 |
-| `src/components/editor/localhost-server-template/index.tsx` | 新建组件，展示 Localhost Server 模板 |
-| `src/components/editor/localhost-server-template/index.module.css` | 新建组件样式 |
+| 文件                                                               | 改动                                                                                                                                                           |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/routes/editor.tsx`                                            | 新增 AI 配置弹窗 state、ref、handler、tab 切换逻辑，新增 "AI 配置" 按钮                                                                                        |
+| `src/styles/editor.module.css`                                     | 新增 `.aiConfigDialog`、`.aiConfigHeader`、`.aiConfigTabs`、`.aiConfigTab`、`.aiConfigTabActive`、`.aiConfigContent`、`.aiConfigForm`、`.aiConfigActions` 样式 |
+| `src/utils/editor/ai-engine.ts`                                    | 新增 `streamChatViaApi` 函数，修改 `streamChat` 支持 API 模式                                                                                                  |
+| `src/components/editor/localhost-server-template/index.tsx`        | 新建组件，展示 Localhost Server 模板                                                                                                                           |
+| `src/components/editor/localhost-server-template/index.module.css` | 新建组件样式                                                                                                                                                   |
 
 ---
 
@@ -366,12 +366,12 @@ player.destroy();
 
 ### 涉及文件
 
-| 文件 | 改动 |
-|------|------|
-| `src/routes/editor.tsx` | 新增应用动画弹窗 state、ref、handler，新增 "应用动画" 按钮 |
-| `src/styles/editor.module.css` | 新增 `.animationGuideDialog`、`.animationGuideHeader`、`.animationGuideContent` 样式 |
-| `src/components/editor/animation-guide/index.tsx` | 新建组件，生成动画接入指南 |
-| `src/components/editor/animation-guide/index.module.css` | 新建组件样式 |
+| 文件                                                     | 改动                                                                                 |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `src/routes/editor.tsx`                                  | 新增应用动画弹窗 state、ref、handler，新增 "应用动画" 按钮                           |
+| `src/styles/editor.module.css`                           | 新增 `.animationGuideDialog`、`.animationGuideHeader`、`.animationGuideContent` 样式 |
+| `src/components/editor/animation-guide/index.tsx`        | 新建组件，生成动画接入指南                                                           |
+| `src/components/editor/animation-guide/index.module.css` | 新建组件样式                                                                         |
 
 ---
 
@@ -620,10 +620,10 @@ export default defineConfig({
 
 ### 涉及文件
 
-| 文件 | 改动 |
-|------|------|
-| `vite.config.npm.ts` | 新建，npm 包打包专用 Vite 配置 |
-| `package.json` | 新增 `build:npm` 脚本、`exports` 字段、`files` 字段；新增 `vite-plugin-dts` devDependency |
+| 文件                 | 改动                                                                                      |
+| -------------------- | ----------------------------------------------------------------------------------------- |
+| `vite.config.npm.ts` | 新建，npm 包打包专用 Vite 配置                                                            |
+| `package.json`       | 新增 `build:npm` 脚本、`exports` 字段、`files` 字段；新增 `vite-plugin-dts` devDependency |
 
 ---
 

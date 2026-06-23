@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { createFileRoute, getRouteApi, useNavigate } from '@tanstack/react-router';
 import { useHistoryTree } from '@/hooks/use-history-tree';
 import { useAIChat } from '@/hooks/use-ai-chat';
-import { useModelLoader } from '@/hooks/use-model-loader';
 import { useEditorState } from '@/hooks/use-editor-state';
 import { ChatPanel, type SendMessageOptions } from '@/components/editor/chat-panel';
 import { PreviewPanel } from '@/components/editor/preview-panel';
@@ -13,7 +12,7 @@ import { EditorToolbar } from '@/components/editor/editor-toolbar';
 import { createInitialConfig, DEFAULT_PREVIEW_DOM } from '@/constants/templates';
 import { decodeConfigFromQuery } from '@/utils/editor/share-utils';
 import { dispatchEditorEvent, EDITOR_EVENTS, onEditorEvent } from '@/utils/editor/event-bus';
-import { logger } from '@/libs/logger';
+import { logger } from '@lib/logger';
 import { generateDomSummary } from '@/utils/editor/dom-summary';
 import {
   processDomPatch,
@@ -25,7 +24,7 @@ import {
   tryGetNodeData,
   computeStyles,
 } from '@/utils/editor/ai-response-processor';
-import type { AnimationConfig } from '@/types/animation';
+import type { AnimationConfig } from '@lib/animation-sdk';
 import type { HistoryNodeData } from '@/types/history';
 import styles from '@/styles/editor.module.css';
 
@@ -69,7 +68,7 @@ function EditorPage() {
     useHistoryTree(initialNodeData);
 
   const { messages, isStreaming, sendMessage } = useAIChat();
-  const { isLoaded, error: modelError } = useModelLoader();
+  const [isAIConfigured] = useState(() => Boolean(localStorage.getItem('mosu_ai_base_url')));
 
   const selectedNodeData = selectedNodeId ? tryGetNodeData(getNode, selectedNodeId) : null;
 
@@ -108,9 +107,9 @@ function EditorPage() {
 
   const handleSendMessage = useCallback(
     async (content: string, options: SendMessageOptions) => {
-      if (!isLoaded) {
-        logger.warn('routes.editor.sendMessage', '模型尚未加载');
-        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: modelError ?? '模型加载中，请稍候...', type: 'info' });
+      if (!isAIConfigured) {
+        logger.warn('routes.editor.sendMessage', 'AI not configured');
+        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: 'AI 未配置，请在设置中配置 AI API', type: 'error' });
         return;
       }
 
@@ -161,8 +160,7 @@ function EditorPage() {
       currentConfig,
       sendMessage,
       commitAndSelect,
-      isLoaded,
-      modelError,
+      isAIConfigured,
       messages,
       currentDom,
       currentStyle,
@@ -240,12 +238,14 @@ function EditorPage() {
         currentStyle={currentStyle}
         onImport={handleImport}
       />
-      <ChatPanel
-        messages={displayMessages}
-        isStreaming={isStreaming}
-        onSendMessage={handleSendMessage}
-        currentConfig={currentConfig}
-      />
+      {isAIConfigured && (
+        <ChatPanel
+          messages={displayMessages}
+          isStreaming={isStreaming}
+          onSendMessage={handleSendMessage}
+          currentConfig={currentConfig}
+        />
+      )}
       <div className={styles.previewColumn}>
         <CustomDomPanel customDom={currentDom} customStyle={currentStyle} onApply={handleCustomChange} />
         <PreviewPanel config={currentConfig} customDom={currentDom} customStyle={currentStyle} />

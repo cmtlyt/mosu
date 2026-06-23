@@ -1,5 +1,5 @@
 import type { IframeMessageEnvelope, IframeEventHandler } from '@/types/iframe-message';
-import { logger } from '@/libs/logger';
+import { logger } from '@lib/logger';
 
 const BRIDGE_SOURCE = 'mosu-bridge' as const;
 

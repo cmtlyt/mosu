@@ -1,4 +1,4 @@
-import { logger } from '@/libs/logger';
+import { logger } from '@lib/logger';
 
 const BLOCKED_TAGS = new Set([
   'script',

@@ -66,9 +66,10 @@ export function generateDomSummary(html: string): string;
 ```
 
 **摘要策略**：
+
 1. 使用 `DOMParser` 解析 HTML
 2. 递归遍历元素节点，仅保留：标签名、`class`、`id`、直接子元素数量
-3. 移除所有文本内容、内联 style、data-* 属性值（仅保留 key）
+3. 移除所有文本内容、内联 style、data-\* 属性值（仅保留 key）
 4. 输出为缩进树形文本，例如：
    ```text
    div.container
@@ -130,10 +131,10 @@ const currentDom = selectedNodeData?.customDom ?? initialNodeData.customDom ?? n
 const currentStyle = selectedNodeData?.customStyle ?? initialNodeData.customStyle ?? null;
 ```
 
-| 字段          | 来源             | 说明                                                     |
-| ------------- | ---------------- | -------------------------------------------------------- |
-| `currentDom`   | HistoryNodeData | 当前节点的 DOM 快照，为 `null` 时使用初始默认 DOM         |
-| `currentStyle` | HistoryNodeData | 当前节点的 CSS 快照，为 `null` 时无额外样式               |
+| 字段           | 来源            | 说明                                              |
+| -------------- | --------------- | ------------------------------------------------- |
+| `currentDom`   | HistoryNodeData | 当前节点的 DOM 快照，为 `null` 时使用初始默认 DOM |
+| `currentStyle` | HistoryNodeData | 当前节点的 CSS 快照，为 `null` 时无额外样式       |
 
 **数据流**：
 
@@ -161,8 +162,8 @@ export interface HistoryNodeData {
   source: 'manual' | 'ai';
   timestamp: number;
   messages: ChatMessage[];
-  customDom: string | null;    // 必填：该节点的 DOM 快照，null 表示使用父节点或初始默认值
-  customStyle: string | null;  // 必填：该节点的 CSS 快照，null 表示无额外样式
+  customDom: string | null; // 必填：该节点的 DOM 快照，null 表示使用父节点或初始默认值
+  customStyle: string | null; // 必填：该节点的 CSS 快照，null 表示无额外样式
 }
 ```
 
@@ -223,6 +224,7 @@ export interface ChatMessage {
 **Props**：`PreviewPanel` 接收 `customDom`、`customStyle`、`onCustomDomChange`、`onCustomStyleChange`，由 `editor.tsx` 传入。
 
 **交互约束**：
+
 - 输入框仅在非 streaming 状态下可编辑
 - 输入内容实时保存为草稿（localStorage），避免意外丢失
 - sanitize 失败时在输入框下方显示红色错误提示，不应用
@@ -280,9 +282,7 @@ const handleSendMessage = useCallback(
         hasDomUpdate: msg.role === 'assistant' && hasUpdate,
       }));
 
-      const messagesToCommit = newMessages.filter(
-        (msg) => !messages.some((existing) => existing.id === msg.id),
-      );
+      const messagesToCommit = newMessages.filter((msg) => !messages.some((existing) => existing.id === msg.id));
 
       // 构建完整的 AnimationConfig（系统自动生成 version/id）
       const fullConfig: AnimationConfig = {
@@ -335,13 +335,13 @@ export function sanitizeStyle(rawCss: string): string | null;
 
 使用 `DOMParser` 解析后遍历节点，仅保留以下白名单标签：
 
-| 类别       | 允许标签                                                                 |
-| ---------- | ------------------------------------------------------------------------ |
-| 结构       | `div`, `span`, `p`, `h1`-`h6`, `ul`, `ol`, `li`, `section`, `article`, `header`, `footer`, `main`, `nav` |
-| 文本       | `strong`, `em`, `b`, `i`, `u`, `small`, `sub`, `sup`, `br`, `hr`         |
-| 媒体       | `img`（仅允许 `data:` 或相对路径 `src`）                                  |
-| 表格       | `table`, `thead`, `tbody`, `tr`, `th`, `td`                              |
-| 表单（只读）| `input`（仅 `type="text"/"checkbox"/"radio"`，强制 `disabled`）、`label`  |
+| 类别         | 允许标签                                                                                                 |
+| ------------ | -------------------------------------------------------------------------------------------------------- |
+| 结构         | `div`, `span`, `p`, `h1`-`h6`, `ul`, `ol`, `li`, `section`, `article`, `header`, `footer`, `main`, `nav` |
+| 文本         | `strong`, `em`, `b`, `i`, `u`, `small`, `sub`, `sup`, `br`, `hr`                                         |
+| 媒体         | `img`（仅允许 `data:` 或相对路径 `src`）                                                                 |
+| 表格         | `table`, `thead`, `tbody`, `tr`, `th`, `td`                                                              |
+| 表单（只读） | `input`（仅 `type="text"/"checkbox"/"radio"`，强制 `disabled`）、`label`                                 |
 
 **属性白名单**：仅保留 `class`, `id`, `style`, `data-*`, `aria-*`, `role`。**移除所有事件属性（`on*`）**、`href`（除 `a` 标签外）、`src`（除 `img` 外且需校验协议）。
 
@@ -364,13 +364,16 @@ export function sanitizeStyle(rawCss: string): string | null;
 `sanitizeStyle()` 必须移除以下 CSS 属性和规则：
 
 **禁止的属性**（正则匹配，不区分大小写）：
+
 - `animation`, `animation-name`, `animation-duration`, `animation-timing-function`, `animation-delay`, `animation-iteration-count`, `animation-direction`, `animation-fill-mode`, `animation-play-state`
 - `transition`, `transition-property`, `transition-duration`, `transition-timing-function`, `transition-delay`
 
 **禁止的规则**：
+
 - `@keyframes` 规则块（整个块移除）
 
 **实现方式**：
+
 1. 使用 CSS 解析器（如 `css-tree` 或简易正则）解析 CSS 文本
 2. 遍历所有声明，移除匹配上述属性的声明
 3. 移除所有 `@keyframes` at-rule
@@ -385,19 +388,19 @@ export function sanitizeStyle(rawCss: string): string | null;
 
 ## 4. 文件变更清单
 
-| 文件                                        | 变更类型 | 说明                                                                 |
-| ------------------------------------------- | -------- | -------------------------------------------------------------------- |
-| `src/types/ai-response.ts`                  | 新增     | `AIEditorResponse` 类型定义（dom、style、精简 config）               |
-| `src/types/history.ts`                      | 修改     | `ChatMessage` 增加 `hasDomUpdate?`；`HistoryNodeData` 增加必填 `customDom`、`customStyle` |
-| `src/constants/templates.ts`                | 修改     | 移除 `PresetTemplate` 及 `PRESET_TEMPLATES`，保留 `createInitialConfig` 和默认 DOM 常量 |
-| `src/hooks/use-ai-chat.ts`                  | 修改     | 更新 SYSTEM_PROMPT（追加规则 8-16）、替换解析函数为 `parseAIResponse`、返回值改为 `AIEditorResponse`、传入 DOM 摘要 |
+| 文件                                        | 变更类型 | 说明                                                                                                                                                            |
+| ------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/types/ai-response.ts`                  | 新增     | `AIEditorResponse` 类型定义（dom、style、精简 config）                                                                                                          |
+| `src/types/history.ts`                      | 修改     | `ChatMessage` 增加 `hasDomUpdate?`；`HistoryNodeData` 增加必填 `customDom`、`customStyle`                                                                       |
+| `src/constants/templates.ts`                | 修改     | 移除 `PresetTemplate` 及 `PRESET_TEMPLATES`，保留 `createInitialConfig` 和默认 DOM 常量                                                                         |
+| `src/hooks/use-ai-chat.ts`                  | 修改     | 更新 SYSTEM_PROMPT（追加规则 8-16）、替换解析函数为 `parseAIResponse`、返回值改为 `AIEditorResponse`、传入 DOM 摘要                                             |
 | `src/routes/editor.tsx`                     | 修改     | 移除 `templateIndex`/`handleTemplateChange`；从 history node 派生 currentDom/currentStyle；`handleSendMessage` 处理 dom/style/sanitize/摘要/自动生成 version+id |
-| `src/components/preview/preview-canvas.tsx` | 修改     | Props 移除 `template`，改为 `customDom`/`customStyle`；useLayoutEffect 按新逻辑渲染 |
-| `src/components/editor/preview-panel.tsx`   | 修改     | 移除 templateSelect；Props 改为 `customDom`/`customStyle`/回调；新增 DOM/Style 手动输入面板 |
-| `src/components/editor/chat-panel.tsx`      | 修改     | 移除"恢复默认模板"按钮                                               |
-| `src/components/editor/chat-message.tsx`    | 修改     | 根据 `hasDomUpdate` 渲染"已更新预览场景"标签                         |
-| `src/libs/dom-sanitizer.ts`                 | 新增     | `sanitizeDom()` + `sanitizeStyle()` 函数                             |
-| `src/libs/dom-summary.ts`                   | 新增     | `generateDomSummary()` 函数，将完整 DOM 转为结构化摘要               |
+| `src/components/preview/preview-canvas.tsx` | 修改     | Props 移除 `template`，改为 `customDom`/`customStyle`；useLayoutEffect 按新逻辑渲染                                                                             |
+| `src/components/editor/preview-panel.tsx`   | 修改     | 移除 templateSelect；Props 改为 `customDom`/`customStyle`/回调；新增 DOM/Style 手动输入面板                                                                     |
+| `src/components/editor/chat-panel.tsx`      | 修改     | 移除"恢复默认模板"按钮                                                                                                                                          |
+| `src/components/editor/chat-message.tsx`    | 修改     | 根据 `hasDomUpdate` 渲染"已更新预览场景"标签                                                                                                                    |
+| `src/libs/dom-sanitizer.ts`                 | 新增     | `sanitizeDom()` + `sanitizeStyle()` 函数                                                                                                                        |
+| `src/libs/dom-summary.ts`                   | 新增     | `generateDomSummary()` 函数，将完整 DOM 转为结构化摘要                                                                                                          |
 
 ## 5. 边界情况处理
 

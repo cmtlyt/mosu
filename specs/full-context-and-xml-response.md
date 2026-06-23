@@ -122,24 +122,23 @@ export interface SendMessageOptions {
 
 ```typescript
 const chatMessages: ChatCompletionMessageParam[] = [
-  { role: "system", content: SYSTEM_PROMPT },
+  { role: 'system', content: SYSTEM_PROMPT },
   ...buildSystemDirectives(options),
 ];
 
 // 新增：当 includeFullContext 为 true 时，插入历史对话消息
 if (options?.includeFullContext && options?.conversationHistory) {
-  const historyMessages: ChatCompletionMessageParam[] =
-    options.conversationHistory
-      .filter((msg) => msg.role === "user" || msg.role === "assistant")
-      .map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }));
+  const historyMessages: ChatCompletionMessageParam[] = options.conversationHistory
+    .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+    .map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+    }));
   chatMessages.push(...historyMessages);
 }
 
 chatMessages.push({
-  role: "user",
+  role: 'user',
   content: buildUserContent(content, currentConfig, options),
 });
 ```
@@ -240,13 +239,13 @@ function parseAIResponse(raw: string): AIEditorResponse | null {
   if (xmlMatch) {
     try {
       const parsed = JSON.parse(xmlMatch[1].trim());
-      if (parsed && typeof parsed === "object") {
-        if ("tracks" in parsed && !("config" in parsed)) {
+      if (parsed && typeof parsed === 'object') {
+        if ('tracks' in parsed && !('config' in parsed)) {
           const { name, ...configData } = parsed as { name?: string } & Pick<
             AnimationConfig,
-            "tracks" | "triggerGroups"
+            'tracks' | 'triggerGroups'
           >;
-          return { name: name ?? "动画更新", config: configData };
+          return { name: name ?? '动画更新', config: configData };
         }
         return parsed as AIEditorResponse;
       }
@@ -256,14 +255,11 @@ function parseAIResponse(raw: string): AIEditorResponse | null {
   }
 
   // 降级：兼容旧格式（直接 JSON 或正则提取）
-  logger.warn(
-    "hooks.use-ai-chat.parse",
-    "LLM did not wrap response in <mosu-response> tag, using fallback parser",
-  );
+  logger.warn('hooks.use-ai-chat.parse', 'LLM did not wrap response in <mosu-response> tag, using fallback parser');
 
   try {
     const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && "config" in parsed) {
+    if (parsed && typeof parsed === 'object' && 'config' in parsed) {
       return parsed as AIEditorResponse;
     }
   } catch {
@@ -274,13 +270,13 @@ function parseAIResponse(raw: string): AIEditorResponse | null {
   if (match) {
     try {
       const parsed = JSON.parse(match[0]);
-      if (parsed && typeof parsed === "object") {
-        if ("tracks" in parsed && !("config" in parsed)) {
+      if (parsed && typeof parsed === 'object') {
+        if ('tracks' in parsed && !('config' in parsed)) {
           const { name, ...configData } = parsed as { name?: string } & Pick<
             AnimationConfig,
-            "tracks" | "triggerGroups"
+            'tracks' | 'triggerGroups'
           >;
-          return { name: name ?? "动画更新", config: configData };
+          return { name: name ?? '动画更新', config: configData };
         }
         return parsed as AIEditorResponse;
       }
@@ -381,22 +377,16 @@ function parseAIResponse(raw: string): AIEditorResponse | null {
 {
   data.messages.length > 0 && (
     <details className={styles.collapsibleSection}>
-      <summary className={styles.collapsibleHeader}>
-        对话记录 ({data.messages.length} 条)
-      </summary>
+      <summary className={styles.collapsibleHeader}>对话记录 ({data.messages.length} 条)</summary>
       <div className={styles.conversationMessages}>
         {data.messages.map((msg) => (
           <div
             key={msg.id}
             className={`${styles.messageItem} ${
-              msg.role === "user"
-                ? styles.messageItemUser
-                : styles.messageItemAssistant
+              msg.role === 'user' ? styles.messageItemUser : styles.messageItemAssistant
             }`}
           >
-            <div className={styles.messageRole}>
-              {msg.role === "user" ? "你" : "AI 助手"}
-            </div>
+            <div className={styles.messageRole}>{msg.role === 'user' ? '你' : 'AI 助手'}</div>
             <div className={styles.messageContent}>{msg.content}</div>
           </div>
         ))}

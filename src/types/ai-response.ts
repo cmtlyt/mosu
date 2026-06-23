@@ -1,4 +1,4 @@
-import type { AnimationConfig } from './animation';
+import type { AnimationConfig } from '@lib/animation-sdk';
 import type { AnimationPatchInstruction } from './animation-patch';
 import type { DomPatchInstruction } from './dom-patch';
 

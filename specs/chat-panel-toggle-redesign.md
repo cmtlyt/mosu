@@ -17,11 +17,11 @@
 
 将现有的 `checkbox + 文本` 替换为**圆角方形图标按钮**，三个开关并排：
 
-| 开关 | 图标（SVG） | Tooltip（title） |
-|------|------------|-----------------|
-| 携带全量 DOM | 代码括号 `</>` | `携带全量 DOM` |
-| 携带 CSS 样式 | 调色板 | `携带 CSS 样式` |
-| 携带动画配置 | 齿轮 | `携带动画配置` |
+| 开关          | 图标（SVG）    | Tooltip（title） |
+| ------------- | -------------- | ---------------- |
+| 携带全量 DOM  | 代码括号 `</>` | `携带全量 DOM`   |
+| 携带 CSS 样式 | 调色板         | `携带 CSS 样式`  |
+| 携带动画配置  | 齿轮           | `携带动画配置`   |
 
 ### 视觉规范
 
@@ -36,7 +36,9 @@
 - `<label>` 承载图标样式，内联 SVG（`16rem × 16rem`），通过 `title` 属性提供 hover tooltip
 - **选中态通过 CSS `:checked` 伪类实现**，避免 JS 操作 DOM：
   ```css
-  .toggleInput:checked + .toggleIcon { /* 选中态样式 */ }
+  .toggleInput:checked + .toggleIcon {
+    /* 选中态样式 */
+  }
   ```
 
 ## 需求 3：System Prompt 联动
@@ -68,10 +70,10 @@
 
 ## 涉及文件
 
-| 文件 | 改动 |
-|------|------|
-| `src/components/editor/chat-panel.tsx` | 新增 state、改 UI 为隐藏 input + label 图标、更新 `SendMessageOptions` 类型 |
-| `src/components/editor/chat-panel.module.css` | 隐藏 input 样式、label 图标样式、`:checked` 伪类选中态 |
-| `src/routes/editor.tsx` | `handleSendMessage` 中处理 `includeAnimationConfig` |
-| `src/hooks/use-ai-chat.ts` | 根据 `includeAnimationConfig` 控制 user prompt 中是否包含动画配置 |
-| `src/constants/ai.ts` | `SYSTEM_PROMPT` 新增动画配置携带模式规则 |
+| 文件                                          | 改动                                                                        |
+| --------------------------------------------- | --------------------------------------------------------------------------- |
+| `src/components/editor/chat-panel.tsx`        | 新增 state、改 UI 为隐藏 input + label 图标、更新 `SendMessageOptions` 类型 |
+| `src/components/editor/chat-panel.module.css` | 隐藏 input 样式、label 图标样式、`:checked` 伪类选中态                      |
+| `src/routes/editor.tsx`                       | `handleSendMessage` 中处理 `includeAnimationConfig`                         |
+| `src/hooks/use-ai-chat.ts`                    | 根据 `includeAnimationConfig` 控制 user prompt 中是否包含动画配置           |
+| `src/constants/ai.ts`                         | `SYSTEM_PROMPT` 新增动画配置携带模式规则                                    |

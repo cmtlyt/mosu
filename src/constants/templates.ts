@@ -1,4 +1,4 @@
-import type { AnimationConfig } from '@/types/animation';
+import type { AnimationConfig } from '@lib/animation-sdk';
 
 export const DEFAULT_PREVIEW_DOM =
   '<div class="animate-target" style="width:100px;height:100px;background:#4f86f7;border-radius:8px;"></div>';

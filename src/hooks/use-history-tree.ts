@@ -1,8 +1,8 @@
 import { useMemo, useCallback, useRef, useSyncExternalStore } from 'react';
 import { createHistoryTree, type HistoryTree, type HistoryNodeInfo } from '@cmtlyt/lingshu-toolkit/shared/history-tree';
 import type { HistoryNodeData, ChatMessage } from '@/types/history';
-import type { AnimationConfig } from '@/types/animation';
-import { logger } from '@/libs/logger';
+import type { AnimationConfig } from '@lib/animation-sdk';
+import { logger } from '@lib/logger';
 
 export interface UseHistoryTreeReturn {
   currentConfig: AnimationConfig;
