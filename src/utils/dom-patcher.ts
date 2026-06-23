@@ -1,5 +1,5 @@
 import type { DomPatchInstruction } from '@/types/dom-patch';
-import { sanitizeDom } from '@/libs/dom-sanitizer';
+import { sanitizeDom } from '@/utils/dom-sanitizer';
 import { logger } from '@lib/logger';
 
 interface PatchResult {

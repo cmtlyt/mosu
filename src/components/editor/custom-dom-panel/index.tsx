@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { sanitizeDom, sanitizeStyle } from '@/libs/dom-sanitizer';
+import { sanitizeDom, sanitizeStyle } from '@/utils/dom-sanitizer';
 import styles from './index.module.css';
 
 interface CustomDomPanelProps {

@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import type { AnimationConfig } from '@lib/animation-sdk';
 import type { AIEditorResponse } from '@/types/ai-response';
 import type { ChatMessage } from '@/types/history';
-import type { ChatCompletionMessageParam } from '@/types/openai';
+import type { EditorChatMessage } from '@/utils/editor/ai-engine';
 import { streamChat } from '@/utils/editor/ai-engine';
 import { logger } from '@lib/logger';
 import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
@@ -83,20 +83,6 @@ function parseAIResponse(raw: string): AIEditorResponse | null {
   return null;
 }
 
-function buildSystemDirectives(options?: SendMessageOptions): ChatCompletionMessageParam[] {
-  const directives: ChatCompletionMessageParam[] = [];
-
-  if (options?.includeCss) {
-    directives.push({ role: 'user', content: '[系统指令] 已启用 CSS 携带模式' });
-  }
-
-  if (options?.includeAnimationConfig === false) {
-    directives.push({ role: 'user', content: '[系统指令] 未启用动画配置携带模式' });
-  }
-
-  return directives;
-}
-
 function buildUserContent(content: string, currentConfig: AnimationConfig, options?: SendMessageOptions): string {
   const configInfo =
     options?.includeAnimationConfig === false ? '' : `\n当前动画配置：\n${JSON.stringify(currentConfig, null, 2)}`;
@@ -146,13 +132,13 @@ export function useAIChat(): UseAIChatReturn {
       dispatchEditorEvent(EDITOR_EVENTS.AI_STREAM_START);
 
       try {
-        const chatMessages: ChatCompletionMessageParam[] = [...buildSystemDirectives(options)];
+        const chatMessages: EditorChatMessage[] = [];
 
         if (options?.includeFullContext && options?.conversationHistory) {
-          const historyMessages: ChatCompletionMessageParam[] = options.conversationHistory
+          const historyMessages: EditorChatMessage[] = options.conversationHistory
             .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
             .map((msg) => ({
-              role: msg.role,
+              role: msg.role as 'user' | 'assistant',
               content: msg.content,
             }));
           chatMessages.push(...historyMessages);
@@ -160,11 +146,18 @@ export function useAIChat(): UseAIChatReturn {
 
         chatMessages.push({ role: 'user', content: buildUserContent(content, currentConfig, options) });
 
-        const fullResponse = await streamChat(chatMessages, (chunk) => {
-          setMessages((prev) =>
-            prev.map((msg) => (msg.id === assistantId ? { ...msg, content: msg.content + chunk } : msg)),
-          );
-        });
+        const fullResponse = await streamChat(
+          chatMessages,
+          (chunk) => {
+            setMessages((prev) =>
+              prev.map((msg) => (msg.id === assistantId ? { ...msg, content: msg.content + chunk } : msg)),
+            );
+          },
+          {
+            includeCss: options?.includeCss,
+            includeAnimationConfig: options?.includeAnimationConfig,
+          },
+        );
 
         const parsedResponse = parseAIResponse(fullResponse);
 

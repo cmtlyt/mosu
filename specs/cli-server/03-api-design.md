@@ -4,13 +4,13 @@
 
 所有 API 路由统一使用 `/mosu/api` 前缀。**对话能力**保持 `/v1/chat/completions` 路径（兼容 OpenAI 格式），**Agent 扩展能力**使用 `/mosu/api/` 前缀：
 
-| 路径                                | 方法 | 说明                        |
-| ----------------------------------- | ---- | --------------------------- |
-| `POST /mosu/api/v1/chat/completions`| POST | AI 对话（兼容 OpenAI 格式） |
-| `GET /mosu/api/capabilities`        | GET  | 返回当前后端支持的能力列表  |
-| `POST /mosu/api/tools/read`         | POST | 读取文件/资源（预留）       |
-| `POST /mosu/api/tools/write`        | POST | 写入文件/资源（预留）       |
-| `POST /mosu/api/tools/*`            | POST | 其他工具能力（预留扩展）    |
+| 路径                                 | 方法 | 说明                        |
+| ------------------------------------ | ---- | --------------------------- |
+| `POST /mosu/api/v1/chat/completions` | POST | AI 对话（兼容 OpenAI 格式） |
+| `GET /mosu/api/capabilities`         | GET  | 返回当前后端支持的能力列表  |
+| `POST /mosu/api/tools/read`          | POST | 读取文件/资源（预留）       |
+| `POST /mosu/api/tools/write`         | POST | 写入文件/资源（预留）       |
+| `POST /mosu/api/tools/*`             | POST | 其他工具能力（预留扩展）    |
 
 ## 能力检查接口
 
@@ -67,10 +67,12 @@
 import { z } from '@hono/zod-openapi';
 
 export const ChatCompletionRequestSchema = z.object({
-  messages: z.array(z.object({
-    role: z.enum(['system', 'user', 'assistant']),
-    content: z.string(),
-  })),
+  messages: z.array(
+    z.object({
+      role: z.enum(['system', 'user', 'assistant']),
+      content: z.string(),
+    }),
+  ),
   stream: z.boolean().optional().default(false),
 });
 

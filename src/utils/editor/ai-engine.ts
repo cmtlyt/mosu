@@ -1,7 +1,12 @@
-import type { ChatCompletionMessageParam } from '@/types/openai';
+import { apiClient, type InferRequest } from '@lib/api-client';
 import { logger } from '@lib/logger';
 
-const AI_BASE_URL_KEY = 'mosu_ai_base_url';
+export type EditorChatMessage = InferRequest<typeof apiClient.editor.chat.$post>['json']['messages'][number];
+
+export interface EditorChatOptions {
+  includeCss?: boolean;
+  includeAnimationConfig?: boolean;
+}
 
 async function parseSSEStream(body: ReadableStream<Uint8Array>, onChunk: (text: string) => void): Promise<string> {
   const reader = body.getReader();
@@ -40,21 +45,19 @@ async function parseSSEStream(body: ReadableStream<Uint8Array>, onChunk: (text: 
   return fullResponse;
 }
 
-async function streamChatViaApi(
-  baseUrl: string,
-  messages: ChatCompletionMessageParam[],
+export async function streamChat(
+  messages: EditorChatMessage[],
   onChunk: (text: string) => void,
+  options?: EditorChatOptions,
 ): Promise<string> {
-  logger.info('libs.ai-engine.api', `Using API mode with base URL: ${baseUrl}`);
+  logger.info('libs.ai-engine.editor-chat', 'Calling editor chat API', { messageCount: messages.length, options });
 
-  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const response = await apiClient.editor.chat.$post({
+    json: {
       messages,
       stream: true,
-      temperature: 0.7,
-    }),
+      options,
+    },
   });
 
   if (!response.ok || !response.body) {
@@ -62,17 +65,4 @@ async function streamChatViaApi(
   }
 
   return parseSSEStream(response.body, onChunk);
-}
-
-export async function streamChat(
-  messages: ChatCompletionMessageParam[],
-  onChunk: (text: string) => void,
-): Promise<string> {
-  const baseUrl = localStorage.getItem(AI_BASE_URL_KEY) ?? '';
-
-  if (!baseUrl) {
-    throw new Error('AI base URL not configured. Please set it in settings.');
-  }
-
-  return streamChatViaApi(baseUrl, messages, onChunk);
 }

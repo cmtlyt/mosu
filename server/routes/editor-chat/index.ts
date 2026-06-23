@@ -4,12 +4,12 @@ import * as controller from './controller';
 import { capabilityRegistry } from '@mosu/capabilities';
 import type { Env } from '@mosu/types';
 
-const router = new OpenAPIHono<Env>().openapi(routes.chatRoute, controller.handleChatCompletion);
+const router = new OpenAPIHono<Env>().openapi(routes.editorChatRoute, controller.handleEditorChat);
 
 capabilityRegistry.register({
-  name: 'chat',
-  description: 'AI chat completion',
-  endpoint: '/mosu/api/v1/chat/completions',
+  name: 'editor-chat',
+  description: 'Editor AI chat with system directives',
+  endpoint: '/mosu/api/editor/chat',
   enabled: true,
 });
 

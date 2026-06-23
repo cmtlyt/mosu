@@ -1,4 +1,4 @@
-import type { ChatCompletionMessageParam } from '@/types/openai';
+import type { ChatCompletionMessageParam } from '@lib/types/openai';
 
 export const EDITOR_SYSTEM_PROMPT = `你是动画编辑器助手，根据用户需求输出合法 JSON（不含 markdown 标记）。
 

@@ -1,5 +1,5 @@
 import { createRoute } from '@hono/zod-openapi';
-import { ChatCompletionRequestSchema, ChatCompletionResponseSchema, ChatCompletionChunkSchema } from './schema';
+import * as schema from './schema';
 
 export const chatRoute = createRoute({
   method: 'post',
@@ -8,7 +8,7 @@ export const chatRoute = createRoute({
     body: {
       content: {
         'application/json': {
-          schema: ChatCompletionRequestSchema,
+          schema: schema.ChatCompletionRequestSchema,
         },
       },
     },
@@ -17,10 +17,10 @@ export const chatRoute = createRoute({
     200: {
       content: {
         'application/json': {
-          schema: ChatCompletionResponseSchema,
+          schema: schema.ChatCompletionResponseSchema,
         },
         'text/event-stream': {
-          schema: ChatCompletionChunkSchema,
+          schema: schema.ChatCompletionChunkSchema,
         },
       },
       description: 'Chat completion response',

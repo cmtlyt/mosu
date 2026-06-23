@@ -5,8 +5,8 @@ import { logger } from '@lib/logger';
 const rootDir = process.cwd();
 
 // 加载 .env 和 .env.local（后者覆盖前者）
-config({ path: resolve(rootDir, '.env') });
-config({ path: resolve(rootDir, '.env.local'), override: true });
+config({ path: resolve(rootDir, '.env'), quiet: true });
+config({ path: resolve(rootDir, '.env.local'), override: true, quiet: true });
 
 export interface ServerConfig {
   port: number;

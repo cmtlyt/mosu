@@ -1,10 +1,10 @@
 import type { AIEditorResponse } from '@/types/ai-response';
 import type { AnimationConfig } from '@lib/animation-sdk';
 import type { ChatMessage, HistoryNodeData } from '@/types/history';
-import { applyDomPatch } from '@/libs/dom-patcher';
-import { applyAnimationPatch } from '@/libs/animation-patcher';
-import { sanitizeStyle } from '@/libs/dom-sanitizer';
-import { mergeStyles } from '@/libs/style-merger';
+import { applyDomPatch } from '@/utils/dom-patcher';
+import { applyAnimationPatch } from '@/utils/animation-patcher';
+import { sanitizeStyle } from '@/utils/dom-sanitizer';
+import { mergeStyles } from '@/utils/style-merger';
 import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
 import { logger } from '@lib/logger';
 
