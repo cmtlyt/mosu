@@ -27,8 +27,8 @@ export function useHistoryTree(initialData: HistoryNodeData): UseHistoryTreeRetu
 
   const cachedSnapshotRef = useRef<ReturnType<HistoryTree<HistoryNodeData>['getSnapshot']> | null>(null);
 
-  const subscribe = useMemo(
-    () => (onStoreChange: () => void) =>
+  const subscribe = useCallback(
+    (onStoreChange: () => void) =>
       tree.onChange(() => {
         cachedSnapshotRef.current = null;
         onStoreChange();
@@ -36,15 +36,12 @@ export function useHistoryTree(initialData: HistoryNodeData): UseHistoryTreeRetu
     [tree],
   );
 
-  const getSnapshotFn = useMemo(
-    () => () => {
-      if (cachedSnapshotRef.current === null) {
-        cachedSnapshotRef.current = tree.getSnapshot();
-      }
-      return cachedSnapshotRef.current;
-    },
-    [tree],
-  );
+  const getSnapshotFn = useCallback(() => {
+    if (cachedSnapshotRef.current === null) {
+      cachedSnapshotRef.current = tree.getSnapshot();
+    }
+    return cachedSnapshotRef.current;
+  }, [tree]);
 
   const snapshot = useSyncExternalStore(subscribe, getSnapshotFn);
 

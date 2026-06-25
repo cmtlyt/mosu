@@ -109,17 +109,11 @@ export function buildFullConfig(
   };
 }
 
-export function prepareMessagesForCommit(
-  messages: ChatMessage[],
-  existingMessages: ChatMessage[],
-  hasUpdate: boolean,
-): ChatMessage[] {
-  const newMessages = messages.map((msg) => ({
+export function prepareMessagesForCommit(newMessages: ChatMessage[], hasUpdate: boolean): ChatMessage[] {
+  return newMessages.map((msg) => ({
     ...msg,
     hasDomUpdate: msg.role === 'assistant' && hasUpdate,
   }));
-
-  return newMessages.filter((msg) => !existingMessages.some((existing) => existing.id === msg.id));
 }
 
 /**

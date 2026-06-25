@@ -87,15 +87,6 @@ function EditorPage() {
     [commit, setSelectedNodeId],
   );
 
-  const displayMessages = useMemo(() => {
-    if (messages.length === 0) {
-      return conversationHistory;
-    }
-    const historyIds = new Set(conversationHistory.map((msg) => msg.id));
-    const streamingOnly = messages.filter((msg) => !historyIds.has(msg.id));
-    return [...conversationHistory, ...streamingOnly];
-  }, [conversationHistory, messages]);
-
   useEffect(() => {
     const unsubStreamError = onEditorEvent(EDITOR_EVENTS.AI_STREAM_ERROR, (detail) => {
       const message = (detail as { message?: string })?.message ?? '未知错误';
@@ -123,7 +114,7 @@ function EditorPage() {
 
       const result = await sendMessage(content, currentConfig, {
         domContent,
-        isFullDom: options.includeFullDom,
+        includeFullDom: options.includeFullDom,
         includeCss: options.includeCss,
         includeAnimationConfig: options.includeAnimationConfig,
         currentStyle,
@@ -141,7 +132,7 @@ function EditorPage() {
       const fullConfig = buildFullConfig(mergedConfig, content);
 
       const hasUpdate = patchedDom !== null || !!sanitizedStyle;
-      const messagesToCommit = prepareMessagesForCommit(result.messages, messages, hasUpdate);
+      const messagesToCommit = prepareMessagesForCommit(result.newMessages, hasUpdate);
 
       const finalDom = patchedDom === null ? currentDom : patchedDom;
       const finalStyle = computeStyles(currentStyle, sanitizedStyle, options.includeCss);
@@ -158,7 +149,7 @@ function EditorPage() {
       dispatchEditorEvent(EDITOR_EVENTS.CONFIG_COMMITTED);
       dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '动画配置已更新', type: 'success' });
     },
-    [currentConfig, sendMessage, commitAndSelect, configured, messages, currentDom, currentStyle, conversationHistory],
+    [currentConfig, sendMessage, commitAndSelect, configured, currentDom, currentStyle, conversationHistory],
   );
 
   const handleCustomChange = useCallback(
@@ -242,7 +233,7 @@ function EditorPage() {
         onImport={handleImport}
       />
       <ChatPanel
-        messages={displayMessages}
+        messages={messages}
         isStreaming={isStreaming}
         onSendMessage={handleSendMessage}
         currentConfig={currentConfig}

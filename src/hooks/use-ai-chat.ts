@@ -9,7 +9,7 @@ import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
 
 export interface SendMessageOptions {
   domContent?: string;
-  isFullDom?: boolean;
+  includeFullDom?: boolean;
   includeCss?: boolean;
   includeAnimationConfig?: boolean;
   currentStyle?: string | null;
@@ -24,7 +24,7 @@ interface UseAIChatReturn {
     content: string,
     currentConfig: AnimationConfig,
     options?: SendMessageOptions,
-  ) => Promise<{ response: AIEditorResponse | null; messages: ChatMessage[] }>;
+  ) => Promise<{ response: AIEditorResponse | null; messages: ChatMessage[]; newMessages: ChatMessage[] }>;
 }
 
 function parseJsonToResponse(parsed: unknown): AIEditorResponse | null {
@@ -88,7 +88,7 @@ function buildUserContent(content: string, currentConfig: AnimationConfig, optio
     options?.includeAnimationConfig === false ? '' : `\n当前动画配置：\n${JSON.stringify(currentConfig, null, 2)}`;
 
   const domInfo = options?.domContent
-    ? options.isFullDom
+    ? options.includeFullDom
       ? `\n\n当前预览区域的完整 DOM：\n${options.domContent}`
       : `\n\n当前预览区域的 DOM 结构摘要：\n${options.domContent}`
     : '';
@@ -108,7 +108,7 @@ export function useAIChat(): UseAIChatReturn {
     async (content: string, currentConfig: AnimationConfig, options?: SendMessageOptions) => {
       if (streamingRef.current) {
         logger.warn('hooks.use-ai-chat.send', 'Cannot send message while stream');
-        return { response: null, messages };
+        return { response: null, messages, newMessages: [] };
       }
 
       const userMessage: ChatMessage = {
@@ -156,6 +156,8 @@ export function useAIChat(): UseAIChatReturn {
           {
             includeCss: options?.includeCss,
             includeAnimationConfig: options?.includeAnimationConfig,
+            includeFullDom: options?.includeFullDom,
+            includeFullContext: options?.includeFullContext,
           },
         );
 
@@ -186,7 +188,16 @@ export function useAIChat(): UseAIChatReturn {
           });
         }
 
-        return { response: parsedResponse, messages: finalMessages };
+        const newAssistantMessage: ChatMessage = {
+          ...assistantMessage,
+          content: fullResponse,
+        };
+
+        return {
+          response: parsedResponse,
+          messages: finalMessages,
+          newMessages: [userMessage, newAssistantMessage],
+        };
       } catch (error) {
         logger.error('hooks.use-ai-chat.stream', 'AI chat failed', error);
         setIsStreaming(false);
@@ -197,7 +208,11 @@ export function useAIChat(): UseAIChatReturn {
           prev.map((msg) => (msg.id === assistantId ? { ...msg, content: '生成失败，请重试' } : msg)),
         );
 
-        return { response: null, messages };
+        return {
+          response: null,
+          messages,
+          newMessages: [userMessage, { ...assistantMessage, content: '生成失败，请重试' }],
+        };
       }
     },
     [messages],

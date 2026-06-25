@@ -78,6 +78,8 @@ html 禁止 <script> 和事件属性。selector 基于 DOM 摘要中的 class/id
 ## 关键约束
 - name 每次必须返回
 - target 使用 CSS 选择器，匹配当前 DOM
+- **严禁 selector 访问不存在的 DOM 元素**：所有 domPatch 的 selector、config/animationPatch 的 target 必须引用当前 DOM 中已存在的元素，禁止对不存在的元素执行任何操作
+- **严禁使用 DOM 的 style 属性设置样式**：所有样式必须通过 style 字段返回的 CSS 规则实现，禁止在 html 中使用 style="..." 内联样式, 如果有应该主动抽离到 style 字段的 css 规则中
 - style 允许 transition 和伪类动画（如 :hover），但禁止 animation 和 @keyframes（这些由 config.tracks 管理）
 - 增量修改时保留未提及的 track/triggerGroup
 - type 为 "auto" 的轨道无需配置 trigger 和 triggerGroup，直接省略即可，auto 轨道会在 apply 时自动播放

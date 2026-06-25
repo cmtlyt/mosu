@@ -1,8 +1,7 @@
 .canvas {
-  flex: 1;
   display: flex;
   background: #f8fafc;
-  min-height: 200rem;
+  height: 100%;
 }
 
 .target {

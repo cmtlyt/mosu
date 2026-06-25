@@ -12,6 +12,8 @@ export type EditorChatMessage = InferRequest<typeof apiClient.editor.chat.$post>
 export interface EditorChatOptions {
   includeCss?: boolean;
   includeAnimationConfig?: boolean;
+  includeFullDom?: boolean;
+  includeFullContext?: boolean;
 }
 
 async function streamViaBackend(

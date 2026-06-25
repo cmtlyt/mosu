@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import type { ChatMessage } from '@/types/history';
 import styles from './index.module.css';
 
@@ -7,7 +7,7 @@ interface ChatMessageProps {
   isStreaming?: boolean;
 }
 
-export function ChatMessageItem({ message, isStreaming }: ChatMessageProps) {
+export const ChatMessageItem = memo(({ message, isStreaming }: ChatMessageProps) => {
   const [expanded, setExpanded] = useState(false);
   const isUser = message.role === 'user';
   const isAssistantDone = !isUser && !isStreaming && !!message.animationName;
@@ -37,4 +37,4 @@ export function ChatMessageItem({ message, isStreaming }: ChatMessageProps) {
       <div className={styles.content}>{message.content}</div>
     </div>
   );
-}
+});
