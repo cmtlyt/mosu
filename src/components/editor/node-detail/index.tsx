@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { HistoryNodeData } from '@/types/history';
 import type { AnimationConfig } from '@lib/animation-sdk';
-import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
 import styles from './index.module.css';
 
 interface NodeDetailProps {
@@ -70,21 +69,6 @@ export function NodeDetail({ data, onCommitEdit }: NodeDetailProps) {
     });
   };
 
-  const handleCopyDetail = async () => {
-    const detail = {
-      config: data.config,
-      dom: data.customDom ?? null,
-      style: data.customStyle ?? null,
-    };
-    const formatted = JSON.stringify(detail);
-    try {
-      await navigator.clipboard.writeText(formatted);
-      dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '详情已复制到剪贴板', type: 'success' });
-    } catch (error) {
-      dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: `复制失败: ${(error as Error).message}`, type: 'error' });
-    }
-  };
-
   return (
     <div className={styles.detail}>
       <div className={styles.field}>
@@ -122,9 +106,6 @@ export function NodeDetail({ data, onCommitEdit }: NodeDetailProps) {
         </button>
         <button type="button" className={styles.buttonSecondary} onClick={handleRestore}>
           恢复
-        </button>
-        <button type="button" className={styles.buttonSecondary} onClick={handleCopyDetail}>
-          复制详情
         </button>
       </div>
 

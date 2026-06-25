@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { createFileRoute, getRouteApi, useNavigate } from '@tanstack/react-router';
 import { useHistoryTree } from '@/hooks/use-history-tree';
 import { useAIChat } from '@/hooks/use-ai-chat';
@@ -27,6 +27,7 @@ import {
   computeStyles,
 } from '@/utils/editor/ai-response-processor';
 import type { AnimationConfig } from '@lib/animation-sdk';
+import type { HistoryNodeInfo } from '@cmtlyt/lingshu-toolkit/shared/history-tree';
 import type { HistoryNodeData } from '@/types/history';
 import styles from '@/styles/editor.module.css';
 
@@ -66,8 +67,17 @@ function EditorPage() {
 
   const { isReady, selectedNodeId, setSelectedNodeId } = useEditorState(animationId);
 
-  const { currentConfig, conversationHistory, commit, checkout, getNode, getSnapshot, getInheritedDomStyle } =
-    useHistoryTree(initialNodeData);
+  const {
+    currentConfig,
+    conversationHistory,
+    commit,
+    checkout,
+    getNode,
+    getSnapshot,
+    getInheritedDomStyle,
+    exportTree,
+    importTree,
+  } = useHistoryTree(initialNodeData);
 
   const { messages, isStreaming, sendMessage } = useAIChat();
   const [configured, setConfigured] = useState(() => isAIConfigured());
@@ -204,6 +214,83 @@ function EditorPage() {
     [commitAndSelect],
   );
 
+  const handleCopyContext = useCallback(
+    async (nodeData: HistoryNodeData) => {
+      // 构建从根节点到当前节点的完整路径
+      const snapshot = getSnapshot();
+      const path: HistoryNodeData[] = [];
+
+      // 找到当前节点的 ID
+      let currentId: string | null = null;
+      for (const [id, entry] of Object.entries(snapshot.nodes) as [string, HistoryNodeInfo<HistoryNodeData>][]) {
+        if (entry.data === nodeData) {
+          currentId = id;
+          break;
+        }
+      }
+
+      if (!currentId) {
+        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '无法找到节点路径', type: 'error' });
+        return;
+      }
+
+      // 从当前节点向上遍历到根节点
+      let nodeId: string | null = currentId;
+      while (nodeId) {
+        const nodeEntry: HistoryNodeInfo<HistoryNodeData> | undefined = snapshot.nodes[nodeId];
+        if (nodeEntry) {
+          path.unshift(nodeEntry.data);
+          nodeId = nodeEntry.parentId;
+        } else {
+          break;
+        }
+      }
+
+      // 构建上下文：合并所有对话记录，最终状态取最后一个节点
+      const allMessages = path.flatMap((node) => node.messages);
+      const finalNode = path[path.length - 1];
+
+      const context = {
+        path: path.map((node, index) => ({
+          step: index + 1,
+          label: node.label,
+          source: node.source,
+          timestamp: node.timestamp,
+          messageCount: node.messages.length,
+        })),
+        conversationHistory: allMessages,
+        finalState: {
+          config: finalNode.config,
+          customDom: finalNode.customDom,
+          customStyle: finalNode.customStyle,
+        },
+      };
+
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(context, null, 2));
+        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, {
+          text: `上下文已复制（${path.length} 个节点，${allMessages.length} 条对话）`,
+          type: 'success',
+        });
+      } catch (error) {
+        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: `复制失败: ${(error as Error).message}`, type: 'error' });
+      }
+    },
+    [getSnapshot],
+  );
+
+  const handleImportTree = useCallback(
+    async (file: File) => {
+      const success = await importTree(file);
+      if (success) {
+        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '历史树导入成功', type: 'success' });
+      } else {
+        dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '历史树导入失败', type: 'error' });
+      }
+    },
+    [importTree],
+  );
+
   const snapshot = getSnapshot();
 
   if (!isReady) {
@@ -249,6 +336,9 @@ function EditorPage() {
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
         onCommitEdit={handleNodeEditCommit}
+        onExportTree={exportTree}
+        onImportTree={handleImportTree}
+        onCopyContext={handleCopyContext}
       />
       <MessageToast />
     </div>
