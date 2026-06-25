@@ -1,7 +1,7 @@
 import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react-oxc';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
-import devServer from '@hono/vite-dev-server';
+import { mosuPlugin } from './plugins/vite';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import packageJson from './package.json' with { type: 'json' };
@@ -19,10 +19,7 @@ function getFrontendConfig(): UserConfig {
         generatedRouteTree: './src/route-tree.gen.ts',
       }),
       react({}),
-      devServer({
-        entry: './server/app.ts',
-        exclude: [/^\/(src|node_modules)\//u],
-      }),
+      mosuPlugin({ serveStatic: false }),
     ],
     resolve: {
       tsconfigPaths: true,

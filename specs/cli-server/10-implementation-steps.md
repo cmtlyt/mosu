@@ -82,13 +82,13 @@ export interface ChatCompletionMessageParam {
 **`src/utils/editor/ai-engine.ts`**：
 
 ```typescript
-import type { ChatCompletionMessageParam } from '@/types/openai';
+import type { ChatCompletionMessageParam } from '@lib/types/openai';
 ```
 
 **`src/hooks/use-ai-chat.ts`**：
 
 ```typescript
-import type { ChatCompletionMessageParam } from '@/types/openai';
+import type { ChatCompletionMessageParam } from '@lib/types/openai';
 ```
 
 ## 涉及文件清单（完整版）

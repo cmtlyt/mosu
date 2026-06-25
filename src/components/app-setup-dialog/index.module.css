@@ -1,0 +1,31 @@
+.dialog {
+  border: none;
+  border-radius: 12rem;
+  padding: 32rem;
+  max-width: 480rem;
+  width: 90vw;
+  box-shadow: 0 10rem 40rem rgba(0, 0, 0, 0.15);
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.header {
+  margin-bottom: 24rem;
+  text-align: center;
+}
+
+.header h2 {
+  margin: 0 0 8rem 0;
+  font-size: 20rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.header p {
+  margin: 0;
+  font-size: 14rem;
+  color: #64748b;
+  line-height: 1.6;
+}

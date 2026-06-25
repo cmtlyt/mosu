@@ -20,6 +20,11 @@
       "import": "./dist-npm/api/api-client.mjs",
       "require": "./dist-npm/api/api-client.cjs",
       "types": "./dist-npm/api/libs/api-client.d.ts"
+    },
+    "./plugins/*": {
+      "import": "./dist-npm/plugins/*.mjs",
+      "require": "./dist-npm/plugins/*.cjs",
+      "types": "./dist-npm/plugins/plugins/*.d.ts"
     }
   },
   "scripts": {

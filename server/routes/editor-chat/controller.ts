@@ -1,23 +1,9 @@
 import { logger } from '@lib/logger';
 import { llmService } from '@mosu/services';
-import { EDITOR_SYSTEM_PROMPT } from '@mosu/prompts/editor';
+import { EDITOR_SYSTEM_PROMPT, buildSystemDirectives } from '@lib/prompts/editor';
 import type { ChatCompletionMessageParam } from '@lib/types/openai';
 import type { editorChatRoute } from './routes';
 import type { RouteHandler } from '@mosu/types';
-
-function buildSystemDirectives(options?: { includeCss?: boolean; includeAnimationConfig?: boolean }): string[] {
-  const directives: string[] = [];
-
-  if (options?.includeCss) {
-    directives.push('[系统指令] 已启用 CSS 携带模式');
-  }
-
-  if (options?.includeAnimationConfig === false) {
-    directives.push('[系统指令] 未启用动画配置携带模式');
-  }
-
-  return directives;
-}
 
 export const handleEditorChat: RouteHandler<typeof editorChatRoute> = async (c) => {
   const { messages, stream, options } = c.req.valid('json');

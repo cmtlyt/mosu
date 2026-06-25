@@ -89,6 +89,17 @@ html 禁止 <script> 和事件属性。selector 基于 DOM 摘要中的 class/id
 ## 动画配置携带模式规则
 当收到"[系统指令] 未启用动画配置携带模式"时，**禁止**返回 config 和 animationPatch 字段，仅允许返回 name、domPatch、style。`;
 
+export function buildSystemDirectives(options?: { includeCss?: boolean; includeAnimationConfig?: boolean }): string[] {
+  const directives: string[] = [];
+  if (options?.includeCss) {
+    directives.push('[系统指令] 已启用 CSS 携带模式');
+  }
+  if (options?.includeAnimationConfig === false) {
+    directives.push('[系统指令] 未启用动画配置携带模式');
+  }
+  return directives;
+}
+
 export function buildEditorMessages(userMessage: string, context?: string): ChatCompletionMessageParam[] {
   const messages: ChatCompletionMessageParam[] = [
     {

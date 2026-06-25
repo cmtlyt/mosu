@@ -3,16 +3,13 @@ import { Link } from '@tanstack/react-router';
 import type { AnimationConfig } from '@lib/animation-sdk';
 import { LocalhostServerTemplate } from '@/components/editor/localhost-server-template';
 import { AnimationGuide } from '@/components/editor/animation-guide';
+import { ApiConfigForm, saveApiConfigToStorage } from '@/components/api-config-form';
 import { exportProjectToFile, importProjectFromFile, encodeConfigToQuery } from '@/utils/editor/share-utils';
 import { dispatchEditorEvent, EDITOR_EVENTS } from '@/utils/editor/event-bus';
 import { logger } from '@lib/logger';
 import styles from './index.module.css';
 
-const AI_MODE_KEY = 'mosu_ai_mode';
-const AI_BASE_URL_KEY = 'mosu_ai_base_url';
-
-type AiMode = 'webllm' | 'api';
-type AiConfigTab = 'config' | 'server';
+type ConfigTab = 'config' | 'localhost';
 
 interface EditorToolbarProps {
   currentConfig: AnimationConfig;
@@ -26,9 +23,7 @@ export function EditorToolbar({ currentConfig, currentDom, currentStyle, onImpor
   const aiConfigDialogRef = useRef<HTMLDialogElement>(null);
   const animationGuideDialogRef = useRef<HTMLDialogElement>(null);
 
-  const [activeAiTab, setActiveAiTab] = useState<AiConfigTab>('config');
-  const [aiMode, setAiMode] = useState<AiMode>(() => (localStorage.getItem(AI_MODE_KEY) as AiMode) ?? 'webllm');
-  const [apiBaseUrl, setApiBaseUrl] = useState(() => localStorage.getItem(AI_BASE_URL_KEY) ?? '');
+  const [activeTab, setActiveTab] = useState<ConfigTab>('config');
 
   const handleImportClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -75,14 +70,15 @@ export function EditorToolbar({ currentConfig, currentDom, currentStyle, onImpor
     aiConfigDialogRef.current?.showModal();
   }, []);
 
-  const handleSaveAiConfig = useCallback(() => {
-    localStorage.setItem(AI_MODE_KEY, aiMode);
-    if (aiMode === 'api') {
-      localStorage.setItem(AI_BASE_URL_KEY, apiBaseUrl);
-    }
-    logger.info('editor.toolbar.aiConfig', `AI mode saved: ${aiMode}`);
-    dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: 'AI 配置已保存', type: 'success' });
-  }, [aiMode, apiBaseUrl]);
+  const handleSaveConfig = useCallback(
+    (config: { aiMode: 'mosu' | 'api'; serverBaseUrl: string; aiBaseUrl: string; aiApiKey: string }) => {
+      saveApiConfigToStorage(config);
+      logger.info('editor.toolbar.config', `Config saved: aiMode=${config.aiMode}`);
+      dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '配置已保存', type: 'success' });
+      aiConfigDialogRef.current?.close();
+    },
+    [],
+  );
 
   const handleOpenAnimationGuide = useCallback(() => {
     animationGuideDialogRef.current?.showModal();
@@ -113,7 +109,7 @@ export function EditorToolbar({ currentConfig, currentDom, currentStyle, onImpor
             分享
           </button>
           <button type="button" className={styles.toolbarButton} onClick={handleOpenAiConfig}>
-            AI 配置
+            API 配置
           </button>
           <button type="button" className={styles.toolbarButton} onClick={handleOpenAnimationGuide}>
             应用动画
@@ -131,7 +127,7 @@ export function EditorToolbar({ currentConfig, currentDom, currentStyle, onImpor
 
       <dialog ref={aiConfigDialogRef} className={styles.aiConfigDialog}>
         <div className={styles.aiConfigHeader}>
-          <h2>AI 配置</h2>
+          <h2>API 配置</h2>
           <button type="button" onClick={() => aiConfigDialogRef.current?.close()}>
             ×
           </button>
@@ -140,86 +136,28 @@ export function EditorToolbar({ currentConfig, currentDom, currentStyle, onImpor
         <div className={styles.aiConfigTabs}>
           <button
             type="button"
-            className={`${styles.aiConfigTab} ${activeAiTab === 'config' ? styles.aiConfigTabActive : ''}`}
-            onClick={() => setActiveAiTab('config')}
+            className={`${styles.aiConfigTab} ${activeTab === 'config' ? styles.aiConfigTabActive : ''}`}
+            onClick={() => setActiveTab('config')}
           >
-            AI 配置
+            API 配置
           </button>
           <button
             type="button"
-            className={`${styles.aiConfigTab} ${activeAiTab === 'server' ? styles.aiConfigTabActive : ''}`}
-            onClick={() => setActiveAiTab('server')}
+            className={`${styles.aiConfigTab} ${activeTab === 'localhost' ? styles.aiConfigTabActive : ''}`}
+            onClick={() => setActiveTab('localhost')}
           >
             Localhost AI Server
           </button>
         </div>
 
         <div className={styles.aiConfigContent}>
-          {activeAiTab === 'config' ? (
-            <form
-              method="dialog"
-              className={styles.aiConfigForm}
-              onSubmit={(event) => {
-                const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
-                if (submitter?.value === 'confirm') {
-                  handleSaveAiConfig();
-                }
-              }}
-            >
-              <fieldset>
-                <legend>调用方式</legend>
-                <label>
-                  <input
-                    type="radio"
-                    name="aiMode"
-                    value="webllm"
-                    checked={aiMode === 'webllm'}
-                    onChange={() => setAiMode('webllm')}
-                    aria-label="WebLLM 浏览器端推理"
-                  />
-                  WebLLM（浏览器端推理）
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="aiMode"
-                    value="api"
-                    checked={aiMode === 'api'}
-                    onChange={() => setAiMode('api')}
-                    aria-label="API 调用 OpenAI 兼容格式"
-                  />
-                  API 调用（OpenAI 兼容格式）
-                </label>
-              </fieldset>
-
-              {aiMode === 'api' && (
-                <>
-                  <label className={styles.aiConfigUrlLabel}>
-                    API Base URL
-                    <input
-                      type="url"
-                      value={apiBaseUrl}
-                      onChange={(event) => setApiBaseUrl(event.target.value)}
-                      placeholder="http://localhost:3001/v1"
-                      aria-label="API Base URL"
-                    />
-                  </label>
-                  <p className={styles.aiConfigHint}>
-                    请勿直接填写官方 API 地址（如 OpenAI），因为需要在前端暴露 API Key，存在安全风险。建议使用
-                    "Localhost AI Server" 标签页中的模板搭建本地代理，通过代理转发请求以保护密钥安全。
-                  </p>
-                </>
-              )}
-
-              <div className={styles.aiConfigActions}>
-                <button type="submit" value="cancel">
-                  取消
-                </button>
-                <button type="submit" value="confirm">
-                  保存
-                </button>
-              </div>
-            </form>
+          {activeTab === 'config' ? (
+            <ApiConfigForm
+              onSave={handleSaveConfig}
+              submitButtonText="保存"
+              showCancelButton
+              onCancel={() => aiConfigDialogRef.current?.close()}
+            />
           ) : (
             <LocalhostServerTemplate />
           )}

@@ -774,7 +774,7 @@ export function mosuServerPlugin(): Plugin {
 移除所有 WebLLM 相关代码，仅保留 API 调用模式。完整文件内容：
 
 ```typescript
-import type { ChatCompletionMessageParam } from '@/types/openai';
+import type { ChatCompletionMessageParam } from '@lib/types/openai';
 import { logger } from '@lib/logger';
 
 const AI_BASE_URL_KEY = 'mosu_ai_base_url';
@@ -1250,13 +1250,13 @@ export interface ChatCompletionMessageParam {
 **`src/utils/editor/ai-engine.ts`**：
 
 ```typescript
-import type { ChatCompletionMessageParam } from '@/types/openai';
+import type { ChatCompletionMessageParam } from '@lib/types/openai';
 ```
 
 **`src/hooks/use-ai-chat.ts`**：
 
 ```typescript
-import type { ChatCompletionMessageParam } from '@/types/openai';
+import type { ChatCompletionMessageParam } from '@lib/types/openai';
 ```
 
 ---

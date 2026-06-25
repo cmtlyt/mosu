@@ -9,6 +9,8 @@ import { CustomDomPanel } from '@/components/editor/custom-dom-panel';
 import { BranchPanel } from '@/components/editor/branch-panel';
 import { MessageToast } from '@/components/editor/message-toast';
 import { EditorToolbar } from '@/components/editor/editor-toolbar';
+import { AppSetupDialog } from '@/components/app-setup-dialog';
+import { isAIConfigured } from '@/constants/api-config';
 import { createInitialConfig, DEFAULT_PREVIEW_DOM } from '@/constants/templates';
 import { decodeConfigFromQuery } from '@/utils/editor/share-utils';
 import { dispatchEditorEvent, EDITOR_EVENTS, onEditorEvent } from '@/utils/editor/event-bus';
@@ -68,7 +70,7 @@ function EditorPage() {
     useHistoryTree(initialNodeData);
 
   const { messages, isStreaming, sendMessage } = useAIChat();
-  const [isAIConfigured] = useState(() => Boolean(localStorage.getItem('mosu_ai_base_url')));
+  const [configured, setConfigured] = useState(() => isAIConfigured());
 
   const selectedNodeData = selectedNodeId ? tryGetNodeData(getNode, selectedNodeId) : null;
 
@@ -107,7 +109,7 @@ function EditorPage() {
 
   const handleSendMessage = useCallback(
     async (content: string, options: SendMessageOptions) => {
-      if (!isAIConfigured) {
+      if (!configured) {
         logger.warn('routes.editor.sendMessage', 'AI not configured');
         dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: 'AI 未配置，请在设置中配置 AI API', type: 'error' });
         return;
@@ -156,16 +158,7 @@ function EditorPage() {
       dispatchEditorEvent(EDITOR_EVENTS.CONFIG_COMMITTED);
       dispatchEditorEvent(EDITOR_EVENTS.MESSAGE, { text: '动画配置已更新', type: 'success' });
     },
-    [
-      currentConfig,
-      sendMessage,
-      commitAndSelect,
-      isAIConfigured,
-      messages,
-      currentDom,
-      currentStyle,
-      conversationHistory,
-    ],
+    [currentConfig, sendMessage, commitAndSelect, configured, messages, currentDom, currentStyle, conversationHistory],
   );
 
   const handleCustomChange = useCallback(
@@ -230,6 +223,16 @@ function EditorPage() {
     );
   }
 
+  if (!configured) {
+    return (
+      <AppSetupDialog
+        onComplete={() => {
+          setConfigured(true);
+        }}
+      />
+    );
+  }
+
   return (
     <div className={styles.editorPage}>
       <EditorToolbar
@@ -238,14 +241,12 @@ function EditorPage() {
         currentStyle={currentStyle}
         onImport={handleImport}
       />
-      {isAIConfigured && (
-        <ChatPanel
-          messages={displayMessages}
-          isStreaming={isStreaming}
-          onSendMessage={handleSendMessage}
-          currentConfig={currentConfig}
-        />
-      )}
+      <ChatPanel
+        messages={displayMessages}
+        isStreaming={isStreaming}
+        onSendMessage={handleSendMessage}
+        currentConfig={currentConfig}
+      />
       <div className={styles.previewColumn}>
         <CustomDomPanel customDom={currentDom} customStyle={currentStyle} onApply={handleCustomChange} />
         <PreviewPanel config={currentConfig} customDom={currentDom} customStyle={currentStyle} />

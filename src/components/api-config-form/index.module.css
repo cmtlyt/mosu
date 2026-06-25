@@ -1,0 +1,107 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16rem;
+}
+
+.fieldset {
+  border: 1px solid #e2e8f0;
+  border-radius: 8rem;
+  padding: 12rem;
+  margin: 0;
+}
+
+.fieldset legend {
+  font-weight: 500;
+  padding: 0 8rem;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 8rem;
+  margin: 8rem 0;
+  cursor: pointer;
+  font-size: 14rem;
+  color: #334155;
+}
+
+.urlLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 8rem;
+  margin: 0;
+  width: 100%;
+  font-size: 14rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+.urlLabel input {
+  width: 100%;
+  padding: 8rem 12rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6rem;
+  font-size: 14rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.urlLabel input:focus {
+  outline: none;
+  border-color: #4f86f7;
+  box-shadow: 0 0 0 3rem rgba(79, 134, 247, 0.1);
+}
+
+.hint {
+  margin: 0;
+  padding: 8rem 12rem;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 6rem;
+  font-size: 12rem;
+  line-height: 1.6;
+  color: #92400e;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8rem;
+  margin-top: 8rem;
+}
+
+.submitButton {
+  padding: 8rem 16rem;
+  border-radius: 6rem;
+  font-size: 14rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: #4f86f7;
+  border: 1px solid #4f86f7;
+  color: #fff;
+  transition: background 0.2s ease;
+}
+
+.submitButton:hover {
+  background: #3b72db;
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  padding: 8rem 16rem;
+  border-radius: 6rem;
+  font-size: 14rem;
+  cursor: pointer;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+}
+
+.cancelButton:hover {
+  background: #e2e8f0;
+}
