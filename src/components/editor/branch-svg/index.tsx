@@ -1,12 +1,11 @@
 import { useMemo } from 'react';
 import type { HistoryTreeSnapshot } from '@cmtlyt/lingshu-toolkit/shared/history-tree';
-import type { HistoryNodeData } from '@/types/history';
 import styles from './index.module.css';
 
-interface BranchSvgProps {
-  snapshot: HistoryTreeSnapshot<HistoryNodeData>;
+interface BranchSvgProps<T> {
+  snapshot: HistoryTreeSnapshot<T>;
   selectedNodeId: string | null;
-  onNodeClick: (nodeId: string) => void;
+  onNodeClick?: (nodeId: string) => void;
   onNodeDoubleClick: (nodeId: string) => void;
 }
 
@@ -30,7 +29,7 @@ const NODE_RADIUS = 16;
 const LEVEL_HEIGHT = 60;
 const SIBLING_GAP = 80;
 
-function computeLevelCounts(snapshot: HistoryTreeSnapshot<HistoryNodeData>): Map<number, number> {
+function computeLevelCounts<T>(snapshot: HistoryTreeSnapshot<T>): Map<number, number> {
   const levelCounts = new Map<number, number>();
   if (!snapshot.rootId) {
     return levelCounts;
@@ -51,8 +50,8 @@ function computeLevelCounts(snapshot: HistoryTreeSnapshot<HistoryNodeData>): Map
   return levelCounts;
 }
 
-function computeNodeLayouts(
-  snapshot: HistoryTreeSnapshot<HistoryNodeData>,
+function computeNodeLayouts<T>(
+  snapshot: HistoryTreeSnapshot<T>,
   selectedNodeId: string | null,
   levelCounts: Map<number, number>,
 ): { nodes: LayoutNode[]; positions: Map<string, { x: number; y: number }> } {
@@ -85,7 +84,7 @@ function computeNodeLayouts(
       id,
       x,
       y,
-      label: nodeInfo.data?.label ?? 'Unknown',
+      label: (nodeInfo.data as { label?: string })?.label ?? 'Unknown',
       isActive: id === snapshot.currentId,
       isSelected: id === selectedNodeId,
     });
@@ -97,8 +96,8 @@ function computeNodeLayouts(
   return { nodes, positions };
 }
 
-function computeEdges(
-  snapshot: HistoryTreeSnapshot<HistoryNodeData>,
+function computeEdges<T>(
+  snapshot: HistoryTreeSnapshot<T>,
   positions: Map<string, { x: number; y: number }>,
 ): LayoutEdge[] {
   const edges: LayoutEdge[] = [];
@@ -117,8 +116,8 @@ function computeEdges(
   return edges;
 }
 
-function layoutTree(
-  snapshot: HistoryTreeSnapshot<HistoryNodeData>,
+function layoutTree<T>(
+  snapshot: HistoryTreeSnapshot<T>,
   selectedNodeId: string | null,
 ): { nodes: LayoutNode[]; edges: LayoutEdge[] } {
   if (!snapshot.rootId || !snapshot.nodes[snapshot.rootId]) {
@@ -132,7 +131,7 @@ function layoutTree(
   return { nodes, edges };
 }
 
-export function BranchSvg({ snapshot, selectedNodeId, onNodeClick, onNodeDoubleClick }: BranchSvgProps) {
+export function BranchSvg<T>({ snapshot, selectedNodeId, onNodeClick, onNodeDoubleClick }: BranchSvgProps<T>) {
   const { nodes, edges } = useMemo(() => layoutTree(snapshot, selectedNodeId), [snapshot, selectedNodeId]);
 
   const svgHeight = Math.max(300, (nodes.length > 0 ? Math.max(...nodes.map((n) => n.y)) : 0) + 80);
@@ -152,7 +151,7 @@ export function BranchSvg({ snapshot, selectedNodeId, onNodeClick, onNodeDoubleC
         <g
           key={node.id}
           className={styles.branchNode}
-          onClick={() => onNodeClick(node.id)}
+          onClick={() => onNodeClick?.(node.id)}
           onDoubleClick={() => onNodeDoubleClick(node.id)}
         >
           <circle

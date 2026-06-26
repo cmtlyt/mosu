@@ -164,7 +164,10 @@ import { InputArea } from '@/components/chat/input-area';
 **接口**：
 
 ```typescript
-function useAutoScroll(messages: ChatMessage[], isStreaming: boolean): {
+function useAutoScroll(
+  messages: ChatMessage[],
+  isStreaming: boolean,
+): {
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   scrollToBottom: () => void;
@@ -172,6 +175,7 @@ function useAutoScroll(messages: ChatMessage[], isStreaming: boolean): {
 ```
 
 **行为**：
+
 - **默认**：每次 messages 变化时自动滚动到底部
 - **用户主动上滚**：streaming 中检测用户离开底部（阈值 50rem），暂停自动滚动并移除 scroll 监听器（性能优化）
 - **重新启用**：下一次发送消息时（末尾为 user 消息），重置自动滚动并重新添加监听器
@@ -192,17 +196,20 @@ function useAutoScroll(messages: ChatMessage[], isStreaming: boolean): {
 #### 4.1 请求格式
 
 ```typescript
-apiClient.v1.chat.completions.$post({
-  json: {
-    messages: [
-      { role: 'system', content: CHAT_SYSTEM_PROMPT },
-      ...historyMessages.map(msg => ({ role: msg.role, content: msg.content })),
-    ],
-    stream: true,
+apiClient.v1.chat.completions.$post(
+  {
+    json: {
+      messages: [
+        { role: 'system', content: CHAT_SYSTEM_PROMPT },
+        ...historyMessages.map((msg) => ({ role: msg.role, content: msg.content })),
+      ],
+      stream: true,
+    },
   },
-}, {
-  init: { signal: abortControllerRef.current.signal },
-});
+  {
+    init: { signal: abortControllerRef.current.signal },
+  },
+);
 ```
 
 #### 4.2 系统提示词
@@ -263,36 +270,37 @@ function useSimpleChat(): {
 ```
 
 **关键实现**：
+
 - 使用 `useEffectEvent` 的 `updateMessage` 避免 stale closure
 - 通过 `AbortController` 支持中断流式响应
 - `sendMessage` 的依赖仅为 `[isStreaming]`，通过 `setMessages` 的回调获取最新历史
 
 ### 7. 文件清单
 
-| 文件路径 | 说明 |
-|---|---|
-| `libs/prompts/chat.ts` | 系统提示词（新建） |
-| `src/hooks/use-simple-chat.ts` | 聊天逻辑 Hook（新建） |
-| `src/hooks/use-auto-scroll.ts` | 自动滚动管理 Hook（新建） |
-| `src/components/chat/chat-container/index.tsx` + `.css` | 主容器组件（新建） |
-| `src/components/chat/chat-message/index.tsx` + `.css` | 消息项组件（从 editor 迁移） |
-| `src/components/chat/chat-message-list/index.tsx` + `.css` | 消息列表组件（从 editor 迁移） |
-| `src/components/chat/input-area/index.tsx` + `.css` | 输入区域组件（从 editor 迁移） |
-| `src/components/editor/chat-panel/index.tsx` | 修改：导入路径指向 `@/components/chat/` |
-| `src/components/editor/chat-panel/index.module.css` | 修改：仅保留 `.chatPanel` 样式 |
-| `src/routes/chat.tsx` | 路由页面（新建） |
+| 文件路径                                                   | 说明                                    |
+| ---------------------------------------------------------- | --------------------------------------- |
+| `libs/prompts/chat.ts`                                     | 系统提示词（新建）                      |
+| `src/hooks/use-simple-chat.ts`                             | 聊天逻辑 Hook（新建）                   |
+| `src/hooks/use-auto-scroll.ts`                             | 自动滚动管理 Hook（新建）               |
+| `src/components/chat/chat-container/index.tsx` + `.css`    | 主容器组件（新建）                      |
+| `src/components/chat/chat-message/index.tsx` + `.css`      | 消息项组件（从 editor 迁移）            |
+| `src/components/chat/chat-message-list/index.tsx` + `.css` | 消息列表组件（从 editor 迁移）          |
+| `src/components/chat/input-area/index.tsx` + `.css`        | 输入区域组件（从 editor 迁移）          |
+| `src/components/editor/chat-panel/index.tsx`               | 修改：导入路径指向 `@/components/chat/` |
+| `src/components/editor/chat-panel/index.module.css`        | 修改：仅保留 `.chatPanel` 样式          |
+| `src/routes/chat.tsx`                                      | 路由页面（新建）                        |
 
 ### 8. 与 Editor 页面的区别
 
-| 特性 | Editor Chat | Simple Chat |
-|---|---|---|
-| 上下文 | 包含动画配置、DOM 等 | 纯对话 |
-| 系统提示 | 复杂的编辑器指令 | 简单的助手角色 |
-| 响应处理 | 解析 JSON 并更新配置 | 直接显示文本 |
-| 历史管理 | 集成历史树 | 简单的消息列表 |
-| API 路径 | `/editor/chat` | `/v1/chat/completions` |
-| 消息折叠 | 启用（enableCollapse=true） | 禁用（enableCollapse=false） |
-| ToggleGroup | 显示 | 隐藏 |
+| 特性        | Editor Chat                 | Simple Chat                  |
+| ----------- | --------------------------- | ---------------------------- |
+| 上下文      | 包含动画配置、DOM 等        | 纯对话                       |
+| 系统提示    | 复杂的编辑器指令            | 简单的助手角色               |
+| 响应处理    | 解析 JSON 并更新配置        | 直接显示文本                 |
+| 历史管理    | 集成历史树                  | 简单的消息列表               |
+| API 路径    | `/editor/chat`              | `/v1/chat/completions`       |
+| 消息折叠    | 启用（enableCollapse=true） | 禁用（enableCollapse=false） |
+| ToggleGroup | 显示                        | 隐藏                         |
 
 ## 验收标准
 

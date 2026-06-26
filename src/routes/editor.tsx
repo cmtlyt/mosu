@@ -7,7 +7,6 @@ import { ChatPanel, type SendMessageOptions } from '@/components/editor/chat-pan
 import { PreviewPanel } from '@/components/editor/preview-panel';
 import { CustomDomPanel } from '@/components/editor/custom-dom-panel';
 import { BranchPanel } from '@/components/editor/branch-panel';
-import { MessageToast } from '@/components/editor/message-toast';
 import { EditorToolbar } from '@/components/editor/editor-toolbar';
 import { AppSetupDialog } from '@/components/app-setup-dialog';
 import { isAIConfigured } from '@/constants/api-config';
@@ -340,7 +339,6 @@ function EditorPage() {
         onImportTree={handleImportTree}
         onCopyContext={handleCopyContext}
       />
-      <MessageToast />
     </div>
   );
 }

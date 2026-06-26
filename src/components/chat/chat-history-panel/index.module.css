@@ -1,0 +1,43 @@
+.chatHistoryPanel {
+  flex: 2;
+  min-width: 280rem;
+  border-left: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  padding: 16rem;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.exportButton {
+  width: 28rem;
+  height: 28rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.exportButton:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.treeContainer {
+  flex: 1;
+  overflow: auto;
+  padding: 16rem;
+}

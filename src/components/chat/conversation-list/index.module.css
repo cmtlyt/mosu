@@ -1,0 +1,99 @@
+.conversationList {
+  flex: 2;
+  min-width: 240rem;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  padding: 16rem;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.list {
+  box-sizing: border-box;
+  flex: 1;
+  overflow-y: auto;
+  padding: 8rem;
+}
+
+.item {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8rem;
+  transition: background-color 0.2s;
+}
+
+.item:hover {
+  background-color: #f1f5f9;
+}
+
+.item.active {
+  background-color: #e0e7ff;
+}
+
+.label {
+  font-size: 14rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bottomRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.time {
+  font-size: 12rem;
+  color: #64748b;
+}
+
+.actions {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 4rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.item:hover .actions {
+  opacity: 1;
+}
+
+.actionButton {
+  width: 28rem;
+  height: 28rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.actionButton:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
