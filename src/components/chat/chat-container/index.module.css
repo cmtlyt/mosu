@@ -1,0 +1,46 @@
+.chatContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 800rem;
+  margin: 0 auto;
+  background: #fff;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rem 24rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.title {
+  font-size: 18rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.clearButton {
+  padding: 6rem 12rem;
+  font-size: 13rem;
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 6rem;
+  cursor: pointer;
+}
+
+.clearButton:hover {
+  background: #f8fafc;
+  color: #334155;
+}
+
+.emptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 14rem;
+}

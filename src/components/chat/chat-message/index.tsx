@@ -5,12 +5,23 @@ import styles from './index.module.css';
 interface ChatMessageProps {
   message: ChatMessage;
   isStreaming?: boolean;
+  enableCollapse?: boolean;
 }
 
-export const ChatMessageItem = memo(({ message, isStreaming }: ChatMessageProps) => {
+export const ChatMessageItem = memo(({ message, isStreaming, enableCollapse = true }: ChatMessageProps) => {
   const [expanded, setExpanded] = useState(false);
   const isUser = message.role === 'user';
-  const isAssistantDone = !isUser && !isStreaming && !!message.animationName;
+
+  if (!enableCollapse) {
+    return (
+      <div className={`${styles.message} ${isUser ? styles.user : styles.assistant}`}>
+        <div className={styles.role}>{isUser ? '你' : 'AI 助手'}</div>
+        <div className={styles.content}>{message.content}</div>
+      </div>
+    );
+  }
+
+  const isAssistantDone = enableCollapse && !isUser && !isStreaming && !!message.animationName;
 
   if (isAssistantDone && !expanded) {
     return (

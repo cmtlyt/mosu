@@ -24,7 +24,7 @@
 
 1. **禁止修改工程化配置**（Vite、TypeScript、ESLint 等配置文件）
 2. **禁止跨端引入**：`server/` 不得从 `src/` 引入，`src/` 不得从 `server/` 引入。共享类型必须放在 `libs/types/` 下，通过 `@lib/types/*` 引用
-3. **禁止使用原生 fetch**：前端必须通过 `@lib/api-client` 的 `apiClient` 调用后端 API
+3. **禁止使用原生 fetch**：前端必须通过 `@/utils/api-client` 的 `apiClient` 调用后端 API（该模块基于 `@lib/api-client` 封装，支持动态 base URL）
 4. **禁止提交带类型错误的代码**：必须修复所有 TypeScript 类型错误
 
 ### 📁 目录与文件组织

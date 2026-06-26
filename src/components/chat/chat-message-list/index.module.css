@@ -1,0 +1,37 @@
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.scrollToBottomWrapper {
+  position: sticky;
+  bottom: 16rem;
+  left: 50%;
+  width: 0;
+  height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.scrollToBottomButton {
+  flex-shrink: 0;
+  width: 36rem;
+  height: 36rem;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2rem 8rem rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  color: #64748b;
+}
+
+.scrollToBottomButton:hover {
+  background: #f8fafc;
+  color: #334155;
+}

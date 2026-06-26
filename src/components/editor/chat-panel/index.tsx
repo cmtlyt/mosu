@@ -2,8 +2,8 @@ import { useRef } from 'react';
 import type { ChatMessage } from '@/types/history';
 import type { AnimationConfig } from '@lib/animation-sdk';
 import type { ToggleGroupRef } from '../toggle-group';
-import { ChatMessageList } from '../chat-message-list';
-import { InputArea } from '../input-area';
+import { ChatMessageList } from '@/components/chat/chat-message-list';
+import { InputArea } from '@/components/chat/input-area';
 import styles from './index.module.css';
 
 export interface SendMessageOptions {

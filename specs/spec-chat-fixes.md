@@ -136,9 +136,7 @@
 `prepareMessagesForCommit` 的过滤逻辑：
 
 ```typescript
-return newMessages.filter(
-  (msg) => !existingMessages.some((existing) => existing.id === msg.id)
-);
+return newMessages.filter((msg) => !existingMessages.some((existing) => existing.id === msg.id));
 ```
 
 `result.messages`（`finalMessages`）是 `useAIChat` 内部 `setMessages` 回调中捕获的完整消息列表，`messages` 是 `useAIChat()` 返回的 state。由于 `sendMessage` 是 async 函数，返回时 React 已经 flush 了所有 `setMessages` 更新，导致 `messages` state 与 `finalMessages` 的 id 完全相同，过滤后为空数组。
@@ -181,9 +179,7 @@ const assistantMessageId = assistantMessage.id;
 // ... 流式处理 ...
 
 // 成功返回时
-const newMessages = finalMessages.filter(
-  (msg) => msg.id === userMessageId || msg.id === assistantMessageId
-);
+const newMessages = finalMessages.filter((msg) => msg.id === userMessageId || msg.id === assistantMessageId);
 
 return { response: parsedResponse, messages: finalMessages, newMessages };
 ```
@@ -192,12 +188,10 @@ return { response: parsedResponse, messages: finalMessages, newMessages };
 
 ```typescript
 // catch 分支也需要返回 newMessages，保持类型一致
-return { 
-  response: null, 
+return {
+  response: null,
   messages,
-  newMessages: messages.filter(
-    (msg) => msg.id === userMessageId || msg.id === assistantMessageId
-  ),
+  newMessages: messages.filter((msg) => msg.id === userMessageId || msg.id === assistantMessageId),
 };
 ```
 
@@ -237,22 +231,22 @@ return {
 
 ## 3. 文件变更清单
 
-| 文件 | 变更类型 | 说明 |
-| --- | --- | --- |
-| `src/routes/editor.tsx` | 修改 | `conversationHistory` → `displayMessages`；`prepareMessagesForCommit` 调用适配新签名；移除 `messages` 依赖 |
-| `src/hooks/use-ai-chat.ts` | 修改 | `sendMessage` 返回值新增 `newMessages`；`streamChat` 调用直接透传 options |
-| `src/utils/editor/ai-engine.ts` | 修改 | `EditorChatOptions` 扩展 `includeFullDom`、`includeFullContext` 字段 |
-| `src/utils/editor/ai-response-processor.ts` | 修改 | `prepareMessagesForCommit` 简化，移除 id 过滤逻辑，参数从 3 个减为 2 个 |
+| 文件                                        | 变更类型 | 说明                                                                                                       |
+| ------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
+| `src/routes/editor.tsx`                     | 修改     | `conversationHistory` → `displayMessages`；`prepareMessagesForCommit` 调用适配新签名；移除 `messages` 依赖 |
+| `src/hooks/use-ai-chat.ts`                  | 修改     | `sendMessage` 返回值新增 `newMessages`；`streamChat` 调用直接透传 options                                  |
+| `src/utils/editor/ai-engine.ts`             | 修改     | `EditorChatOptions` 扩展 `includeFullDom`、`includeFullContext` 字段                                       |
+| `src/utils/editor/ai-response-processor.ts` | 修改     | `prepareMessagesForCommit` 简化，移除 id 过滤逻辑，参数从 3 个减为 2 个                                    |
 
 ## 4. 边界情况处理
 
-| 场景 | 处理方式 |
-| --- | --- |
-| 当前轮次无历史消息时开启"携带全量上下文" | `displayMessages` 退化为 `conversationHistory`，行为与修复前一致 |
-| 当前轮次有多轮对话后开启"携带全量上下文" | `displayMessages` 包含历史树 + 当前轮次所有消息，完整发送 |
-| 后端收到 `includeFullDom`/`includeFullContext` | zod schema 未定义这两个字段，自动 strip，不影响后端逻辑 |
-| AI 返回失败（`response` 为 null） | `newMessages` 仍包含 user + assistant（错误提示），正常 commit |
-| 首次对话（无历史树消息） | `newMessages` 仅包含本次 user + assistant，正常 commit |
+| 场景                                           | 处理方式                                                         |
+| ---------------------------------------------- | ---------------------------------------------------------------- |
+| 当前轮次无历史消息时开启"携带全量上下文"       | `displayMessages` 退化为 `conversationHistory`，行为与修复前一致 |
+| 当前轮次有多轮对话后开启"携带全量上下文"       | `displayMessages` 包含历史树 + 当前轮次所有消息，完整发送        |
+| 后端收到 `includeFullDom`/`includeFullContext` | zod schema 未定义这两个字段，自动 strip，不影响后端逻辑          |
+| AI 返回失败（`response` 为 null）              | `newMessages` 仍包含 user + assistant（错误提示），正常 commit   |
+| 首次对话（无历史树消息）                       | `newMessages` 仅包含本次 user + assistant，正常 commit           |
 
 ## 5. 验收标准
 
